@@ -1,33 +1,37 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'link'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, PlayCircle, Copy } from 'lucide-react'
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, PlayCircle, Copy } from "lucide-react";
 
 export default function PlaygroundPage() {
-  const [activeTab, setActiveTab] = useState('request')
-  const [query, setQuery] = useState('machine learning applications')
-  const [topK, setTopK] = useState('5')
+  const [query, setQuery] = useState("machine learning applications");
+  const [topK, setTopK] = useState("5");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="border-b border-border/50 bg-card/50">
+      <div className="border-b border-zinc-800 bg-zinc-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/" className="gap-2">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-zinc-300 hover:text-white"
+            >
+              <Link href="/" className="gap-2 flex items-center">
                 <ArrowLeft className="w-4 h-4" />
                 Back
               </Link>
             </Button>
             <div>
               <h1 className="text-3xl font-bold">API Playground</h1>
-              <p className="text-muted-foreground">Test the Research Agent API</p>
+              <p className="text-zinc-400">Test the ResearchAgent API</p>
             </div>
           </div>
         </div>
@@ -35,60 +39,79 @@ export default function PlaygroundPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Request Section */}
-          <div className="space-y-6">
-            <Card className="p-6 border-border/50 bg-card/50">
-              <h2 className="font-semibold mb-4">Request</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Query</label>
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Enter your research query"
-                    className="bg-input border-border/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Top-K Results</label>
-                  <Input
-                    type="number"
-                    value={topK}
-                    onChange={(e) => setTopK(e.target.value)}
-                    className="bg-input border-border/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Agents</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {['retrieval', 'nLP', 'summary', 'citation'].map((agent) => (
-                      <Badge key={agent} variant="outline" className="cursor-pointer hover:bg-accent/10">
-                        {agent}
-                      </Badge>
-                    ))}
-                  </div>
+        <div className="grid lg:grid-cols-2 gap-10">
+          {/* Request */}
+          <Card className="p-6 bg-zinc-900 border border-zinc-800 shadow-lg space-y-6">
+            <h2 className="font-semibold text-lg">Request</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm mb-2 text-zinc-300">
+                  Research Query
+                </label>
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Enter your research query"
+                  className="bg-black border-zinc-700 text-white focus:border-blue-500 focus:ring-blue-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm mb-2 text-zinc-300">
+                  Top-K Results
+                </label>
+                <Input
+                  type="number"
+                  value={topK}
+                  onChange={(e) => setTopK(e.target.value)}
+                  className="bg-black border-zinc-700 text-white focus:border-blue-500 focus:ring-blue-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm mb-2 text-zinc-300">
+                  Active Agents
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {["retrieval", "NLP", "summary", "citation"].map((agent) => (
+                    <Badge
+                      key={agent}
+                      variant="outline"
+                      className="cursor-pointer border-zinc-700 text-zinc-300 hover:bg-blue-500/10 hover:border-blue-500"
+                    >
+                      {agent}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Button size="lg" className="w-full bg-primary hover:bg-primary/90 gap-2">
+            <Button
+              size="lg"
+              className="w-full bg-blue-600 hover:bg-blue-500 gap-2"
+            >
               <PlayCircle className="w-4 h-4" />
               Send Request
             </Button>
-          </div>
+          </Card>
 
-          {/* Response Section */}
+          {/* Response */}
           <div className="space-y-4">
-            <Card className="p-6 border-border/50 bg-card/50">
+            <Card className="p-6 bg-zinc-900 border border-zinc-800 shadow-lg">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Response</h2>
-                <Button variant="ghost" size="sm" className="gap-2">
+                <h2 className="font-semibold text-lg">Response</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-zinc-400 hover:text-white gap-2"
+                >
                   <Copy className="w-4 h-4" />
                   Copy
                 </Button>
               </div>
-              <div className="bg-input border border-border/50 rounded p-4 text-sm font-mono text-muted-foreground overflow-auto max-h-96">
+
+              <div className="bg-black border border-zinc-800 rounded-md p-4 text-sm font-mono text-zinc-300 overflow-auto max-h-96">
                 <pre>{`{
   "query": "${query}",
   "status": "success",
@@ -112,12 +135,15 @@ export default function PlaygroundPage() {
               </div>
             </Card>
 
-            <Card className="p-4 border-border/50 bg-card/30">
-              <p className="text-xs text-muted-foreground">Status: <Badge className="ml-2 bg-accent">200 OK</Badge></p>
+            <Card className="p-4 bg-zinc-900 border border-zinc-800">
+              <p className="text-xs text-zinc-400">
+                Status:
+                <Badge className="ml-2 bg-green-600">200 OK</Badge>
+              </p>
             </Card>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -12,11 +12,11 @@ export default async function Page() {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  const { data: todos, error } = await supabase.from("todos").select("*");
+  const { data: error } = await supabase.from("todos").select("*");
 
   if (error) {
-    console.error(error);
+    console.log("Error fetching todos:", error);
   }
 
-  return <HomeClient todos={(todos as Todo[]) ?? []} />;
+  return <HomeClient />;
 }
