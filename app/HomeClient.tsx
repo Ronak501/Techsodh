@@ -4,13 +4,21 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, BookOpen, Brain, Database, Zap } from "lucide-react";
-
-type Todo = {
-  id: number;
-  title: string;
-};
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export default function HomeClient() {
+
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
@@ -47,6 +55,17 @@ export default function HomeClient() {
               className="bg-primary hover:bg-primary/90"
             >
               <Link href="/research">Get Started</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
             </Button>
           </div>
         </div>

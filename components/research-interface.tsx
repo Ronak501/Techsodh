@@ -5,51 +5,72 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Upload, Search, Loader2, CheckCircle } from 'lucide-react'
+import axios from "axios";
 
-export function ResearchInterface() {
+interface Props {
+  setSummaryData: (data: any) => void;
+}
+
+export function ResearchInterface({ setSummaryData }: Props) {
   const [query, setQuery] = useState('')
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [hasSearched, setHasSearched] = useState(false)
 
+
   const handleSearch = async () => {
-    if (!query.trim()) return
-    
-    setIsSearching(true)
-    setHasSearched(true)
-    
-    // Simulate API call
-    setTimeout(() => {
+    if (!query.trim()) return;
+
+    setIsSearching(true);
+    setHasSearched(true);
+
+    try {
+      const response = await axios.post("http://localhost:8000/generate", {
+        prompt: query,
+        max_length: 150,
+      });
+
+      const generatedText = response.data.output;
+
+      // Show result inside ResearchInterface
       setResults([
         {
           id: 1,
-          title: 'Deep Learning Architectures for NLP',
-          authors: 'Smith, J., Johnson, M.',
-          abstract: 'This paper explores modern deep learning architectures used in natural language processing...',
-          citations: 1247,
-          relevance: 0.95
+          title: "AI Generated Research Result",
+          authors: "GPT Model",
+          abstract: generatedText,
+          citations: Math.floor(Math.random() * 1000),
+          relevance: 0.92,
         },
-        {
-          id: 2,
-          title: 'Retrieval-Augmented Generation in LLMs',
-          authors: 'Chen, L., Wang, Y.',
-          abstract: 'RAG systems combine retrieval mechanisms with generative models for improved accuracy...',
-          citations: 856,
-          relevance: 0.92
+      ]);
+
+      // Send structured data to Summary panel
+      const structuredData = {
+        summary: generatedText,
+        keyFindings: [
+          "AI generated summary based on query",
+          "Relevant contextual analysis applied",
+          "Structured research insight produced",
+        ],
+        metrics: {
+          accuracy: 92,
+          relevance: 89,
+          coverage: 85,
         },
-        {
-          id: 3,
-          title: 'Multi-Agent Systems for Information Retrieval',
-          authors: 'Davis, K., Thompson, R.',
-          abstract: 'Multi-agent frameworks enable collaborative problem-solving in complex information tasks...',
-          citations: 623,
-          relevance: 0.88
-        }
-      ])
-      setIsSearching(false)
-    }, 2000)
-  }
+        citations: [
+          { title: "Generated Source 1", authors: "AI Model", year: 2026 },
+          { title: "Generated Source 2", authors: "AI Model", year: 2026 },
+        ],
+      };
+
+      setSummaryData(structuredData);
+    } catch (error) {
+      console.error("API Error:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
