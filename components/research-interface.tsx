@@ -26,45 +26,37 @@ export function ResearchInterface({ setSummaryData }: Props) {
     setHasSearched(true);
 
     try {
-      const response = await axios.post("http://localhost:8000/generate", {
-        prompt: query,
-        max_length: 150,
+      const response = await fetch("/api/research", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
       });
 
-      const generatedText = response.data.output;
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Backend Error:", errorData);
+        throw new Error(errorData.error || "Unknown error");
+      }
 
-      // Show result inside ResearchInterface
+      const data = await response.json();
+      const generatedReport = data.report;
+
+      // Show small preview card
       setResults([
         {
           id: 1,
-          title: "AI Generated Research Result",
-          authors: "GPT Model",
-          abstract: generatedText,
+          title: "AI Research Report",
+          authors: "AI Research Agent",
+          abstract: generatedReport?.executive_summary || "No summary available",
           citations: Math.floor(Math.random() * 1000),
-          relevance: 0.92,
+          relevance: 0.95,
         },
       ]);
 
-      // Send structured data to Summary panel
-      const structuredData = {
-        summary: generatedText,
-        keyFindings: [
-          "AI generated summary based on query",
-          "Relevant contextual analysis applied",
-          "Structured research insight produced",
-        ],
-        metrics: {
-          accuracy: 92,
-          relevance: 89,
-          coverage: 85,
-        },
-        citations: [
-          { title: "Generated Source 1", authors: "AI Model", year: 2026 },
-          { title: "Generated Source 2", authors: "AI Model", year: 2026 },
-        ],
-      };
+      setSummaryData(data);
 
-      setSummaryData(structuredData);
     } catch (error) {
       console.error("API Error:", error);
     } finally {
