@@ -51,7 +51,7 @@ export default function HomeClient({ user }: Props) {
             ) : (
               <>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/login">Login</Link>
+                  <Link href="/signin">Login</Link>
                 </Button>
 
                 <Button asChild size="sm" className="bg-primary">
