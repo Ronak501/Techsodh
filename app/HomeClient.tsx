@@ -7,9 +7,13 @@ import { ArrowRight, BookOpen, Brain, Database, Zap } from "lucide-react";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
 
-export default function HomeClient() {
+interface Props {
+  user: User | null;
+}
 
+export default function HomeClient({ user }: Props) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -31,31 +35,31 @@ export default function HomeClient() {
             <span className="font-bold text-lg">ResearchAgent</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link
-              href="/research"
-              className="text-sm hover:text-accent transition"
-            >
-              Research
-            </Link>
-            <Link
-              href="/dashboard"
-              className="text-sm hover:text-accent transition"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/playground"
-              className="text-sm hover:text-accent transition"
-            >
-              Playground
-            </Link>
-            <Button
-              asChild
-              size="sm"
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Link href="/research">Get Started</Link>
-            </Button>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="text-sm hover:text-accent transition"
+                >
+                  Dashboard
+                </Link>
+
+                <Button asChild size="sm">
+                  <Link href="/research">Start Research</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/login">Login</Link>
+                </Button>
+
+                <Button asChild size="sm" className="bg-primary">
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
+
             <Button
               variant="ghost"
               size="icon"

@@ -11,24 +11,7 @@ export const metadata: Metadata = {
   title: "Research Agent - AI-Powered Research Automation",
   description:
     "Automated research with AI-powered literature retrieval, data analysis, and synthesis",
-  generator: "v0.app",
-  icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
-  },
+  generator: "Ronak Talaviya",
 };
 
 export default function RootLayout({
