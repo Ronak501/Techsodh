@@ -40,7 +40,7 @@
     "@sentry/nextjs": "^10.39.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
-    "@vercel/analytics": "latest",
+    "@vercel/analytics": "^1.6.1",
     "autoprefixer": "^10.4.20",
     "axios": "^1.13.5",
     "class-variance-authority": "^0.7.1",
