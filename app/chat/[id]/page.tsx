@@ -5,6 +5,10 @@ import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import Link from "next/link"
 import { toast } from "sonner"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import rehypeHighlight from "rehype-highlight"
+import rehypeRaw from "rehype-raw"
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,7 +71,7 @@ export default function ChatPage() {
         const { data, error } = await supabase
             .from("conversations")
             .select("*")
-            .eq("user_id", user.id)   // 🔥 VERY IMPORTANT
+            .eq("user_id", user.id)   // VERY IMPORTANT
             .order("created_at", { ascending: false })
 
         if (error) {
@@ -118,6 +122,31 @@ export default function ChatPage() {
         }
 
         toast.success("Conversation renamed")
+        fetchConversations()
+    }
+
+    /* ---------------- DELETE CONVERSATION ---------------- */
+    const deleteConversation = async (id: string) => {
+        const confirmDelete = confirm("Are you sure you want to delete this conversation?")
+        if (!confirmDelete) return
+
+        const { error } = await supabase
+            .from("conversations")
+            .delete()
+            .eq("id", id)
+
+        if (error) {
+            toast.error("Failed to delete conversation")
+            return
+        }
+
+        toast.success("Conversation deleted")
+
+        // If deleted conversation is currently open → redirect
+        if (conversationId === id) {
+            router.push("/chat")
+        }
+
         fetchConversations()
     }
 
@@ -194,12 +223,21 @@ export default function ChatPage() {
                                 {conv.title}
                             </Link>
 
-                            <button
-                                onClick={() => renameConversation(conv.id, conv.title)}
-                                className="text-xs text-blue-400 hover:text-blue-300"
-                            >
-                                Rename
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => renameConversation(conv.id, conv.title)}
+                                    className="text-xs text-blue-400 hover:text-blue-300"
+                                >
+                                    Rename
+                                </button>
+
+                                <button
+                                    onClick={() => deleteConversation(conv.id)}
+                                    className="text-xs text-red-400 hover:text-red-300"
+                                >
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -224,15 +262,62 @@ export default function ChatPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {messages.map((msg, index) => (
+                     {messages.map((msg, index) => (
                         <div
                             key={index}
-                            className={`max-w-xl px-4 py-3 rounded-lg ${msg.role === "user"
-                                    ? "ml-auto bg-blue-600"
+                            className={`max-w-3xl rounded-xl px-6 py-4 shadow-md ${msg.role === "user"
+                                    ? "ml-auto bg-blue-600 text-white"
                                     : "bg-gray-800"
                                 }`}
                         >
-                            {msg.content}
+                            <div className="prose prose-invert max-w-none">
+                                 <ReactMarkdown
+                                     remarkPlugins={[remarkGfm]}
+                                     rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                                     components={{
+                                         h1: ({ node, ...props }) => (
+                                             <h1 className="text-3xl font-bold mt-6 mb-4" {...props} />
+                                         ),
+                                         h2: ({ node, ...props }) => (
+                                             <h2 className="text-2xl font-semibold mt-5 mb-3" {...props} />
+                                         ),
+                                         h3: ({ node, ...props }) => (
+                                             <h3 className="text-xl font-semibold mt-4 mb-2" {...props} />
+                                         ),
+                                         p: ({ node, ...props }) => (
+                                             <p className="mb-3 leading-relaxed" {...props} />
+                                         ),
+                                         ul: ({ node, ...props }) => (
+                                             <ul className="list-disc pl-6 mb-3" {...props} />
+                                         ),
+                                         ol: ({ node, ...props }) => (
+                                             <ol className="list-decimal pl-6 mb-3" {...props} />
+                                         ),
+                                         code(props) {
+                                             const { children, className } = props
+                                             const isInline = !className
+
+                                             if (isInline) {
+                                                 return (
+                                                     <code className="bg-gray-700 px-1 py-0.5 rounded text-sm">
+                                                         {children}
+                                                     </code>
+                                                 )
+                                             }
+
+                                             return (
+                                                 <pre className="bg-black p-4 rounded-lg overflow-x-auto mb-4">
+                                                     <code className={className}>
+                                                         {children}
+                                                     </code>
+                                                 </pre>
+                                             )
+                                         }
+                                     }}
+                                 >
+                                     {msg.content}
+                                 </ReactMarkdown>
+                            </div>
                         </div>
                     ))}
 

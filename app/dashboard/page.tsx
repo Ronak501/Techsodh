@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabase";
+import { createClient } from "@/utils/supabase/client"
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, FileText } from "lucide-react";
 
 export default function DashboardPage() {
+  const supabase = createClient()
   const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {

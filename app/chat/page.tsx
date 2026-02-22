@@ -1,16 +1,15 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { createClient } from "@supabase/supabase-js"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/utils/supabase/client"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useSearchParams } from "next/navigation"
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
-)
+import rehypeHighlight from "rehype-highlight"
+import rehypeRaw from "rehype-raw"
 
 type Message = {
     role: "user" | "assistant"
@@ -24,6 +23,7 @@ type Conversation = {
 }
 
 export default function ChatPage() {
+    const supabase = createClient()
     const searchParams = useSearchParams()
     const conversationId = searchParams.get("id")
     const router = useRouter()
@@ -122,6 +122,31 @@ export default function ChatPage() {
         fetchConversations()
     }
 
+    /* ---------------- DELETE CONVERSATION ---------------- */
+    const deleteConversation = async (id: string) => {
+        const confirmDelete = confirm("Are you sure you want to delete this conversation?")
+        if (!confirmDelete) return
+
+        const { error } = await supabase
+            .from("conversations")
+            .delete()
+            .eq("id", id)
+
+        if (error) {
+            toast.error("Failed to delete conversation")
+            return
+        }
+
+        toast.success("Conversation deleted")
+
+        // If deleted conversation is currently open → redirect
+        if (conversationId === id) {
+            router.push("/chat")
+        }
+
+        fetchConversations()
+    }
+
     /* ---------------- FETCH MESSAGES ---------------- */
     useEffect(() => {
         if (!conversationId) return
@@ -195,12 +220,21 @@ export default function ChatPage() {
                                 {conv.title}
                             </Link>
 
-                            <button
-                                onClick={() => renameConversation(conv.id, conv.title)}
-                                className="text-xs text-blue-400 hover:text-blue-300"
-                            >
-                                Rename
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => renameConversation(conv.id, conv.title)}
+                                    className="text-xs text-blue-400 hover:text-blue-300"
+                                >
+                                    Rename
+                                </button>
+
+                                <button
+                                    onClick={() => deleteConversation(conv.id)}
+                                    className="text-xs text-red-400 hover:text-red-300"
+                                >
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -252,12 +286,59 @@ export default function ChatPage() {
                             {messages.map((msg, index) => (
                                 <div
                                     key={index}
-                                    className={`max-w-xl px-4 py-3 rounded-lg ${msg.role === "user"
-                                            ? "ml-auto bg-blue-600"
+                                    className={`max-w-3xl rounded-xl px-6 py-4 shadow-md ${msg.role === "user"
+                                            ? "ml-auto bg-blue-600 text-white"
                                             : "bg-gray-800"
                                         }`}
                                 >
-                                    {msg.content}
+                                    <div className="prose prose-invert max-w-none">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                                            components={{
+                                                h1: ({ node, ...props }) => (
+                                                    <h1 className="text-3xl font-bold mt-6 mb-4" {...props} />
+                                                ),
+                                                h2: ({ node, ...props }) => (
+                                                    <h2 className="text-2xl font-semibold mt-5 mb-3" {...props} />
+                                                ),
+                                                h3: ({ node, ...props }) => (
+                                                    <h3 className="text-xl font-semibold mt-4 mb-2" {...props} />
+                                                ),
+                                                p: ({ node, ...props }) => (
+                                                    <p className="mb-3 leading-relaxed" {...props} />
+                                                ),
+                                                ul: ({ node, ...props }) => (
+                                                    <ul className="list-disc pl-6 mb-3" {...props} />
+                                                ),
+                                                ol: ({ node, ...props }) => (
+                                                    <ol className="list-decimal pl-6 mb-3" {...props} />
+                                                ),
+                                                code(props) {
+                                                    const { children, className } = props
+                                                    const isInline = !className
+
+                                                    if (isInline) {
+                                                        return (
+                                                            <code className="bg-gray-700 px-1 py-0.5 rounded text-sm">
+                                                                {children}
+                                                            </code>
+                                                        )
+                                                    }
+
+                                                    return (
+                                                        <pre className="bg-black p-4 rounded-lg overflow-x-auto mb-4">
+                                                            <code className={className}>
+                                                                {children}
+                                                            </code>
+                                                        </pre>
+                                                    )
+                                                }
+                                            }}
+                                        >
+                                            {msg.content}
+                                        </ReactMarkdown>
+                                    </div>
                                 </div>
                             ))}
 
