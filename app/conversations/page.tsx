@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
+import { Plus, Pencil } from "lucide-react"
+import { toast } from "sonner"
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
 )
-
 
 type Conversation = {
     id: string
@@ -31,7 +32,7 @@ export default function ConversationsPage() {
             .order("created_at", { ascending: false })
 
         if (error) {
-            console.error(error)
+            toast.error("Failed to load conversations")
             return
         }
 
@@ -57,11 +58,30 @@ export default function ConversationsPage() {
             .single()
 
         if (error) {
-            console.error(error)
+            toast.error("Failed to create conversation")
             return
         }
 
         router.push(`/chat/${data.id}`)
+    }
+
+    const renameConversation = async (id: string, currentTitle: string) => {
+        const newTitle = prompt("Enter new title:", currentTitle)
+        if (!newTitle || newTitle.trim() === "") return
+
+        const { error } = await supabase
+            .from("conversations")
+            .update({ title: newTitle })
+            .eq("id", id)
+
+        if (error) {
+            toast.error("Rename failed: " + error.message)
+            return
+        }
+
+        toast.success("Conversation renamed")
+
+        fetchConversations()
     }
 
     return (
@@ -70,9 +90,9 @@ export default function ConversationsPage() {
                 <h1 className="text-2xl font-bold">Your Conversations</h1>
                 <button
                     onClick={createNewConversation}
-                    className="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700"
+                    className="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
                 >
-                    + New Chat
+                    <Plus /> New Chat
                 </button>
             </div>
 
@@ -80,13 +100,26 @@ export default function ConversationsPage() {
                 {conversations.map((conv) => (
                     <div
                         key={conv.id}
-                        onClick={() => router.push(`/chat/${conv.id}`)}
-                        className="bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700"
+                        className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 flex justify-between items-center"
                     >
-                        <div className="font-semibold">{conv.title}</div>
-                        <div className="text-sm text-gray-400">
-                            {new Date(conv.created_at).toLocaleString()}
+                        {/* LEFT SIDE */}
+                        <div
+                            onClick={() => router.push(`/chat/${conv.id}`)}
+                            className="cursor-pointer"
+                        >
+                            <div className="font-semibold">{conv.title}</div>
+                            <div className="text-sm text-gray-400">
+                                {new Date(conv.created_at).toLocaleString()}
+                            </div>
                         </div>
+
+                        {/* RIGHT SIDE */}
+                        <button
+                            onClick={() => renameConversation(conv.id, conv.title)}
+                            className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2"
+                        >
+                            <Pencil /> Rename
+                        </button>
                     </div>
                 ))}
             </div>

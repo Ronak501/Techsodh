@@ -32,44 +32,65 @@ async function callGemini(history: any[]) {
     return data.candidates[0].content.parts[0].text
 }
 
-
 export async function POST(request: Request) {
+    const supabase = await createClient()
+
     const { message, conversationId } = await request.json()
 
     if (!message || !conversationId) {
         return NextResponse.json({ error: "Missing data" }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    // Verify conversation ownership
+    const { data: conversation } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .single()
 
-    // Insert user message
-    await supabase.from("messages").insert([
-        {
-            conversation_id: conversationId,
-            role: "user",
-            content: message,
-        },
-    ])
+    if (!conversation) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
-    // Fetch full history
+    // Insert user message (NOW RLS WILL PASS)
+    const { error: insertError } = await supabase
+        .from("messages")
+        .insert([
+            {
+                conversation_id: conversationId,
+                role: "user",
+                content: message,
+            },
+        ])
+
+    if (insertError) {
+        console.error("Insert failed:", insertError)
+        return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    // Fetch history
     const { data: history } = await supabase
         .from("messages")
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true })
 
-    // Call Gemini
-    const safeHistory = (history && history.length > 0)
-        ? history
-        : [{ role: "user", content: message }]
+    const safeHistory =
+        history && history.length > 0
+            ? history
+            : [{ role: "user", content: message }]
 
+    // Call Gemini
     const reply = await callGemini(safeHistory)
 
     if (!reply) {
-        return NextResponse.json({ error: "AI returned empty response" }, { status: 500 })
+        return NextResponse.json(
+            { error: "AI returned empty response" },
+            { status: 500 }
+        )
     }
 
-    // Save assistant message
+    // Save assistant reply
     await supabase.from("messages").insert([
         {
             conversation_id: conversationId,

@@ -1,10 +1,34 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Calendar, User, FileText } from 'lucide-react'
+"use client";
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/utils/supabase";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Calendar, FileText } from "lucide-react";
 
 export default function DashboardPage() {
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        setUserName(
+          user.user_metadata?.full_name || user.email || "User"
+        );
+      }
+    };
+
+    getUser();
+  }, []);
+
   const jobs = [
     {
       id: 1,
@@ -37,16 +61,25 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="border-b border-border/50 bg-card/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/" className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">Your research history and results</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/" className="gap-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold">Dashboard</h1>
+                <p className="text-muted-foreground">
+                  Your research history and results
+                </p>
+              </div>
+            </div>
+
+            {/* User Name Section */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              👤 {userName ? `Hi, ${userName}` : "Loading..."}
             </div>
           </div>
         </div>

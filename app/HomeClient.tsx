@@ -189,6 +189,10 @@ export default function HomeClient({ user }: Props) {
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
             <Link href="/research">Start Research Now</Link>
           </Button>
+          <br />
+          <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+            <Link href="/conversations">Start Chat Now</Link>
+          </Button>
         </div>
       </section>
 
