@@ -200,12 +200,21 @@ export default function ChatPage() {
             {/* ================= SIDEBAR ================= */}
             <div className="w-72 border-r border-gray-800 flex flex-col">
 
-                <div className="p-4 border-b border-gray-800">
+                <div className="p-4 border-b border-gray-800 space-y-3">
+
+                    {/* Dashboard Button */}
+                    <Link href="/dashboard">
+                        <button className="w-full bg-gray-800 py-2 rounded-lg hover:bg-gray-700">
+                            Dashboard
+                        </button>
+                    </Link>
+
+                    {/* New Chat Button */}
                     <button
                         onClick={createNewConversation}
-                        className="w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700"
+                        className="mt-2 w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700"
                     >
-                        + New Chat
+                        New Chat
                     </button>
                 </div>
 

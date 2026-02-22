@@ -9,6 +9,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
+import { Plus, MessageSquare, Settings, LogOut, Send, Sparkles, ChevronRight, Trash2, Edit2 } from "lucide-react"
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -203,12 +204,21 @@ export default function ChatPage() {
             {/* ================= SIDEBAR ================= */}
             <div className="w-72 border-r border-gray-800 flex flex-col">
 
-                <div className="p-4 border-b border-gray-800">
+                <div className="p-4 border-b border-gray-800 space-y-3">
+
+                    {/* Dashboard Button */}
+                    <Link href="/dashboard">
+                        <button className="w-full bg-gray-800 py-2 rounded-lg hover:bg-gray-700">
+                            Dashboard
+                        </button>
+                    </Link>
+
+                    {/* New Chat Button */}
                     <button
                         onClick={createNewConversation}
-                        className="w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700"
+                        className="mt-2     w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700"
                     >
-                        + New Chat
+                        New Chat
                     </button>
                 </div>
 
@@ -262,61 +272,61 @@ export default function ChatPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                     {messages.map((msg, index) => (
+                    {messages.map((msg, index) => (
                         <div
                             key={index}
                             className={`max-w-3xl rounded-xl px-6 py-4 shadow-md ${msg.role === "user"
-                                    ? "ml-auto bg-blue-600 text-white"
-                                    : "bg-gray-800"
+                                ? "ml-auto bg-blue-600 text-white"
+                                : "bg-gray-800"
                                 }`}
                         >
                             <div className="prose prose-invert max-w-none">
-                                 <ReactMarkdown
-                                     remarkPlugins={[remarkGfm]}
-                                     rehypePlugins={[rehypeHighlight, rehypeRaw]}
-                                     components={{
-                                         h1: ({ node, ...props }) => (
-                                             <h1 className="text-3xl font-bold mt-6 mb-4" {...props} />
-                                         ),
-                                         h2: ({ node, ...props }) => (
-                                             <h2 className="text-2xl font-semibold mt-5 mb-3" {...props} />
-                                         ),
-                                         h3: ({ node, ...props }) => (
-                                             <h3 className="text-xl font-semibold mt-4 mb-2" {...props} />
-                                         ),
-                                         p: ({ node, ...props }) => (
-                                             <p className="mb-3 leading-relaxed" {...props} />
-                                         ),
-                                         ul: ({ node, ...props }) => (
-                                             <ul className="list-disc pl-6 mb-3" {...props} />
-                                         ),
-                                         ol: ({ node, ...props }) => (
-                                             <ol className="list-decimal pl-6 mb-3" {...props} />
-                                         ),
-                                         code(props) {
-                                             const { children, className } = props
-                                             const isInline = !className
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                                    components={{
+                                        h1: ({ node, ...props }) => (
+                                            <h1 className="text-3xl font-bold mt-6 mb-4" {...props} />
+                                        ),
+                                        h2: ({ node, ...props }) => (
+                                            <h2 className="text-2xl font-semibold mt-5 mb-3" {...props} />
+                                        ),
+                                        h3: ({ node, ...props }) => (
+                                            <h3 className="text-xl font-semibold mt-4 mb-2" {...props} />
+                                        ),
+                                        p: ({ node, ...props }) => (
+                                            <p className="mb-3 leading-relaxed" {...props} />
+                                        ),
+                                        ul: ({ node, ...props }) => (
+                                            <ul className="list-disc pl-6 mb-3" {...props} />
+                                        ),
+                                        ol: ({ node, ...props }) => (
+                                            <ol className="list-decimal pl-6 mb-3" {...props} />
+                                        ),
+                                        code(props) {
+                                            const { children, className } = props
+                                            const isInline = !className
 
-                                             if (isInline) {
-                                                 return (
-                                                     <code className="bg-gray-700 px-1 py-0.5 rounded text-sm">
-                                                         {children}
-                                                     </code>
-                                                 )
-                                             }
+                                            if (isInline) {
+                                                return (
+                                                    <code className="bg-gray-700 px-1 py-0.5 rounded text-sm">
+                                                        {children}
+                                                    </code>
+                                                )
+                                            }
 
-                                             return (
-                                                 <pre className="bg-black p-4 rounded-lg overflow-x-auto mb-4">
-                                                     <code className={className}>
-                                                         {children}
-                                                     </code>
-                                                 </pre>
-                                             )
-                                         }
-                                     }}
-                                 >
-                                     {msg.content}
-                                 </ReactMarkdown>
+                                            return (
+                                                <pre className="bg-black p-4 rounded-lg overflow-x-auto mb-4">
+                                                    <code className={className}>
+                                                        {children}
+                                                    </code>
+                                                </pre>
+                                            )
+                                        }
+                                    }}
+                                >
+                                    {msg.content}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     ))}
