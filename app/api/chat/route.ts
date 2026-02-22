@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server"
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
 const GEMINI_API = process.env.GEMINI_API!
 
-async function callGemini(history: any[]) {
+export async function callGemini(history: any[]) {
     const formatted = history.map((msg) => ({
         role: msg.role === "assistant" ? "model" : "user",
         parts: [{ text: msg.content }],
@@ -42,13 +42,24 @@ export async function POST(request: Request) {
     }
 
     // Verify conversation ownership
-    const { data: conversation } = await supabase
+    // Get logged-in user
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Verify conversation belongs to user
+    const { data: conversation, error: convError } = await supabase
         .from("conversations")
         .select("id")
         .eq("id", conversationId)
+        .eq("user_id", user.id)   
         .single()
 
-    if (!conversation) {
+    if (convError || !conversation) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

@@ -91,7 +91,7 @@ export default function DashboardPage() {
               </Button>
 
               <Button asChild size="sm">
-                <Link href="/conversations">
+                <Link href="/chat">
                   Conversations
                 </Link>
               </Button>
