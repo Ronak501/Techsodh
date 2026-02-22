@@ -78,8 +78,23 @@ export default function DashboardPage() {
             </div>
 
             {/* User Name Section */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              👤 {userName ? `Hi, ${userName}` : "Loading..."}
+            {/* Right Section */}
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                👤 {userName ? `Hi, ${userName}` : "Loading..."}
+              </div>
+
+              <Button asChild size="sm">
+                <Link href="/research/new">
+                  New Research
+                </Link>
+              </Button>
+
+              <Button asChild size="sm">
+                <Link href="/conversations">
+                  Conversations
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -128,8 +143,10 @@ export default function DashboardPage() {
                       {job.status === 'completed' ? 'Completed' : 'In Progress'}
                     </Badge>
                   </div>
-                  <Button variant="outline" size="sm">
-                    View Results
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/research/${job.id}`}>
+                      View Results
+                    </Link>
                   </Button>
                 </div>
               ))}
