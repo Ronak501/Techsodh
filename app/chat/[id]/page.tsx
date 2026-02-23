@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
@@ -9,7 +11,6 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
-import { Plus, MessageSquare, Settings, LogOut, Send, Sparkles, ChevronRight, Trash2, Edit2 } from "lucide-react"
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
