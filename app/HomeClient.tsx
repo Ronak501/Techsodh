@@ -8,6 +8,8 @@ import { Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface Props {
   user: User | null;
@@ -16,10 +18,25 @@ interface Props {
 export default function HomeClient({ user }: Props) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Logout error:", error);
+      return;
+    }
+
+    // Clear router cache & reload
+    router.replace("/");
+    router.refresh();
+  };
 
   if (!mounted) return null;
 
@@ -47,9 +64,17 @@ export default function HomeClient({ user }: Props) {
                 <Button asChild size="sm">
                   <Link href="/research">Start Research</Link>
                 </Button>
+
+                <Button size="sm" variant="destructive" onClick={handleLogout}>
+                  Logout
+                </Button>
               </>
             ) : (
               <>
+                <Button asChild size="sm" className="bg-primary">
+                  <Link href="/price">Pricing</Link>
+                </Button>
+
                 <Button asChild variant="outline" size="sm">
                   <Link href="/signin">Login</Link>
                 </Button>
@@ -101,7 +126,7 @@ export default function HomeClient({ user }: Props) {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
-                  <Link href="/playground">API Playground</Link>
+                  <Link href="/price">View Pricing</Link>
                 </Button>
               </div>
             </div>
