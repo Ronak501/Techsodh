@@ -1,8 +1,25 @@
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
+import {
+    enforceRateLimit,
+    getRequestIp,
+    parseJsonSafely,
+    safeJsonResponse,
+} from "@/lib/api-security"
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
 const GEMINI_API = process.env.GEMINI_API!
+
+const chatRequestSchema = z.object({
+    message: z.string().trim().min(1).max(4000),
+    conversationId: z.string().uuid(),
+})
+
+type GeminiHistoryMessage = {
+    role: "user" | "assistant"
+    content: string
+}
 
 function cleanAIResponse(text: string) {
     return text
@@ -25,7 +42,11 @@ function cleanAIResponse(text: string) {
         .replace(/\n{3,}/g, "\n\n")
 }
 
-export async function callGemini(history: any[]) {
+export async function callGemini(history: GeminiHistoryMessage[]) {
+    if (!GEMINI_API || !GEMINI_API_KEY) {
+        throw new Error("Gemini is not configured")
+    }
+
     const formatted = history.map((msg) => ({
         role: msg.role === "assistant" ? "model" : "user",
         parts: [{ text: msg.content }],
@@ -63,6 +84,11 @@ Rules:
         }
     )
 
+    if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(`Gemini request failed: ${errorText}`)
+    }
+
     const data = await res.json()
 
     // console.log("Gemini response:", JSON.stringify(data, null, 2))
@@ -76,12 +102,22 @@ Rules:
 }
 
 export async function POST(request: Request) {
-    const supabase = await createClient()   
+    const body = await parseJsonSafely<unknown>(request)
+    if (!body) {
+        return safeJsonResponse(400, "Invalid JSON body")
+    }
 
-    const { message, conversationId } = await request.json()
+    const parsed = chatRequestSchema.safeParse(body)
+    if (!parsed.success) {
+        return safeJsonResponse(400, "Invalid request payload")
+    }
 
-    if (!message || !conversationId) {
-        return NextResponse.json({ error: "Missing data" }, { status: 400 })
+    const { message, conversationId } = parsed.data
+
+    const supabase = await createClient()
+
+    if (!GEMINI_API || !GEMINI_API_KEY) {
+        return safeJsonResponse(500, "AI service is not configured")
     }
 
     // Verify conversation ownership
@@ -91,7 +127,28 @@ export async function POST(request: Request) {
     // console.log("User:", user)
 
     if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        return safeJsonResponse(401, "Unauthorized")
+    }
+
+    const limiter = await enforceRateLimit({
+        supabase,
+        scope: "chat",
+        userId: user.id,
+        ip: getRequestIp(request),
+        limit: 60,
+        windowMs: 5 * 60 * 1000,
+    })
+
+    if (!limiter.ok) {
+        return NextResponse.json(
+            { error: "Rate limit exceeded. Try again later." },
+            {
+                status: 429,
+                headers: {
+                    "Retry-After": String(limiter.retryAfterSeconds),
+                },
+            }
+        )
     }
 
     // Verify conversation belongs to user
@@ -103,7 +160,7 @@ export async function POST(request: Request) {
         .single()
 
     if (convError || !conversation) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        return safeJsonResponse(403, "Forbidden")
     }
 
     // Insert user message (NOW RLS WILL PASS)
@@ -119,7 +176,7 @@ export async function POST(request: Request) {
 
     if (insertError) {
         console.error("Insert failed:", insertError)
-        return NextResponse.json({ error: insertError.message }, { status: 500 })
+        return safeJsonResponse(500, insertError.message)
     }
 
     // Fetch history
@@ -138,10 +195,7 @@ export async function POST(request: Request) {
     const reply = await callGemini(safeHistory)
 
     if (!reply) {
-        return NextResponse.json(
-            { error: "AI returned empty response" },
-            { status: 500 }
-        )
+        return safeJsonResponse(500, "AI returned empty response")
     }
 
     // Save assistant reply

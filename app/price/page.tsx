@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -51,8 +52,17 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-background text-foreground py-20 px-4">
+      <button
+        onClick={() => router.back()}
+        className="mb-8 px-4 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+      >
+        ← Back
+      </button>
+
       <div className="max-w-6xl mx-auto text-center mb-16">
         <h1 className="text-5xl font-bold mb-4">
           Simple & Transparent Pricing

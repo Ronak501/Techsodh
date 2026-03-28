@@ -1,6 +1,27 @@
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
 import { callGemini } from "../chat/route"
+import {
+    enforceRateLimit,
+    getRequestIp,
+    parseJsonSafely,
+    safeJsonResponse,
+} from "@/lib/api-security"
+
+const createConversationMessageSchema = z.object({
+    message: z.string().trim().min(1).max(4000),
+    conversationId: z.string().uuid().optional(),
+})
+
+const renameConversationSchema = z.object({
+    id: z.string().uuid(),
+    title: z.string().trim().min(1).max(120),
+})
+
+const deleteConversationSchema = z.object({
+    id: z.string().uuid(),
+})
 
 export async function GET() {
     const supabase = await createClient()
@@ -10,16 +31,17 @@ export async function GET() {
     } = await supabase.auth.getUser()
 
     if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        return safeJsonResponse(401, "Unauthorized")
     }
 
     const { data, error } = await supabase
         .from("conversations")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
 
     if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return safeJsonResponse(500, error.message)
     }
 
     return NextResponse.json(data)
@@ -27,18 +49,46 @@ export async function GET() {
 
 export async function POST(request: Request) {
     const supabase = await createClient()
-    const { message, conversationId } = await request.json()
 
-    if (!message) {
-        return NextResponse.json({ error: "Missing message" }, { status: 400 })
+    const body = await parseJsonSafely<unknown>(request)
+    if (!body) {
+        return safeJsonResponse(400, "Invalid JSON body")
     }
+
+    const parsed = createConversationMessageSchema.safeParse(body)
+    if (!parsed.success) {
+        return safeJsonResponse(400, "Invalid request payload")
+    }
+
+    const { message, conversationId } = parsed.data
 
     const {
         data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        return safeJsonResponse(401, "Unauthorized")
+    }
+
+    const limiter = await enforceRateLimit({
+        supabase,
+        scope: "conversations",
+        userId: user.id,
+        ip: getRequestIp(request),
+        limit: 60,
+        windowMs: 5 * 60 * 1000,
+    })
+
+    if (!limiter.ok) {
+        return NextResponse.json(
+            { error: "Rate limit exceeded. Try again later." },
+            {
+                status: 429,
+                headers: {
+                    "Retry-After": String(limiter.retryAfterSeconds),
+                },
+            }
+        )
     }
 
     let currentConversationId = conversationId
@@ -60,6 +110,17 @@ export async function POST(request: Request) {
         }
 
         currentConversationId = newConversation.id
+    } else {
+        const { data: conversation, error: conversationError } = await supabase
+            .from("conversations")
+            .select("id")
+            .eq("id", currentConversationId)
+            .eq("user_id", user.id)
+            .single()
+
+        if (conversationError || !conversation) {
+            return safeJsonResponse(403, "Forbidden")
+        }
     }
 
     // Insert user message
@@ -103,17 +164,20 @@ export async function PATCH(request: Request) {
     } = await supabase.auth.getUser()
 
     if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        return safeJsonResponse(401, "Unauthorized")
     }
 
-    const { id, title } = await request.json()
-
-    if (!id || !title) {
-        return NextResponse.json(
-            { error: "Missing id or title" },
-            { status: 400 }
-        )
+    const body = await parseJsonSafely<unknown>(request)
+    if (!body) {
+        return safeJsonResponse(400, "Invalid JSON body")
     }
+
+    const parsed = renameConversationSchema.safeParse(body)
+    if (!parsed.success) {
+        return safeJsonResponse(400, "Invalid request payload")
+    }
+
+    const { id, title } = parsed.data
 
     const { error } = await supabase
         .from("conversations")
@@ -122,7 +186,43 @@ export async function PATCH(request: Request) {
         .eq("user_id", user.id) // important security check
 
     if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return safeJsonResponse(500, error.message)
+    }
+
+    return NextResponse.json({ success: true })
+}
+
+export async function DELETE(request: Request) {
+    const supabase = await createClient()
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        return safeJsonResponse(401, "Unauthorized")
+    }
+
+    const body = await parseJsonSafely<unknown>(request)
+    if (!body) {
+        return safeJsonResponse(400, "Invalid JSON body")
+    }
+
+    const parsed = deleteConversationSchema.safeParse(body)
+    if (!parsed.success) {
+        return safeJsonResponse(400, "Invalid request payload")
+    }
+
+    const { id } = parsed.data
+
+    const { error } = await supabase
+        .from("conversations")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+
+    if (error) {
+        return safeJsonResponse(500, error.message)
     }
 
     return NextResponse.json({ success: true })

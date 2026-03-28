@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { ResearchInterface } from "@/components/research-interface";
 import { ResearchSummary } from "@/components/research-summary";
 import { ArrowLeft } from "lucide-react";
+import type { ResearchSummaryData } from "@/lib/research-types";
 
 export default function ResearchPage() {
-  const [summaryData, setSummaryData] = useState<any>(null);
+  const [summaryData, setSummaryData] = useState<ResearchSummaryData | null>(
+    null,
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -17,7 +20,7 @@ export default function ResearchPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <Button asChild variant="ghost" size="sm">
-              <Link href="/" className="gap-2">
+              <Link href="/dashboard" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 Back
               </Link>
@@ -40,7 +43,7 @@ export default function ResearchPage() {
           </div>
 
           <div className="lg:col-span-1">
-            {summaryData && <ResearchSummary {...summaryData} />}
+            {summaryData && <ResearchSummary summaryData={summaryData} />}
           </div>
         </div>
       </div>

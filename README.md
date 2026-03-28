@@ -28,3 +28,21 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Local Development
+
+This repository is standardized on npm.
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the app locally:
+
+```bash
+npm run dev
+```
+
+Do not use pnpm or yarn in this repository.

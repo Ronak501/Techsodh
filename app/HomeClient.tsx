@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, BookOpen, Brain, Database, Zap } from "lucide-react";
 import { Sun, Moon } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
@@ -16,14 +15,38 @@ interface Props {
 }
 
 export default function HomeClient({ user }: Props) {
-  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
+    const root = document.documentElement;
+    const savedTheme = window.localStorage.getItem("theme");
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    const nextTheme =
+      savedTheme === "dark" || (savedTheme !== "light" && prefersDark)
+        ? "dark"
+        : "light";
+
+    root.classList.toggle("dark", nextTheme === "dark");
+    setTheme(nextTheme);
+
+    // Hydration guard for theme-dependent UI
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const nextTheme = theme === "dark" ? "light" : "dark";
+
+    root.classList.toggle("dark", nextTheme === "dark");
+    window.localStorage.setItem("theme", nextTheme);
+    setTheme(nextTheme);
+  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -52,6 +75,19 @@ export default function HomeClient({ user }: Props) {
             <span className="font-bold text-lg">ResearchAgent</span>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Toggle theme"
+              onClick={toggleTheme}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
             {user ? (
               <>
                 <Link
@@ -84,18 +120,6 @@ export default function HomeClient({ user }: Props) {
                 </Button>
               </>
             )}
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {theme === "dark" ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </Button>
           </div>
         </div>
       </nav>

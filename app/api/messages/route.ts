@@ -1,15 +1,76 @@
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
+import {
+    enforceRateLimit,
+    getRequestIp,
+    parseJsonSafely,
+    safeJsonResponse,
+} from "@/lib/api-security"
+
+const getMessagesQuerySchema = z.object({
+    conversationId: z.string().uuid(),
+})
+
+const createMessageBodySchema = z.object({
+    conversationId: z.string().uuid(),
+    role: z.enum(["user", "assistant"]),
+    content: z.string().trim().min(1).max(8000),
+})
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
-    const conversationId = searchParams.get("conversationId")
+    const parsedQuery = getMessagesQuerySchema.safeParse({
+        conversationId: searchParams.get("conversationId"),
+    })
 
-    if (!conversationId) {
-        return NextResponse.json({ error: "conversationId required" }, { status: 400 })
+    if (!parsedQuery.success) {
+        return safeJsonResponse(400, "Valid conversationId is required")
     }
 
-    const supabase = await createClient();
+    const { conversationId } = parsedQuery.data
+
+    const supabase = await createClient()
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        return safeJsonResponse(401, "Unauthorized")
+    }
+
+    const limiter = await enforceRateLimit({
+        supabase,
+        scope: "messages:get",
+        userId: user.id,
+        ip: getRequestIp(request),
+        limit: 120,
+        windowMs: 5 * 60 * 1000,
+    })
+
+    if (!limiter.ok) {
+        return NextResponse.json(
+            { error: "Rate limit exceeded. Try again later." },
+            {
+                status: 429,
+                headers: {
+                    "Retry-After": String(limiter.retryAfterSeconds),
+                },
+            }
+        )
+    }
+
+    const { data: conversation, error: conversationError } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .eq("user_id", user.id)
+        .single()
+
+    if (conversationError || !conversation) {
+        return safeJsonResponse(403, "Forbidden")
+    }
 
     const { data, error } = await supabase
         .from("messages")
@@ -18,20 +79,66 @@ export async function GET(request: Request) {
         .order("created_at", { ascending: true })
 
     if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return safeJsonResponse(500, error.message)
     }
 
     return NextResponse.json(data)
 }
 
 export async function POST(request: Request) {
-    const { conversationId, role, content } = await request.json()
-
-    if (!conversationId || !role || !content) {
-        return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+    const body = await parseJsonSafely<unknown>(request)
+    if (!body) {
+        return safeJsonResponse(400, "Invalid JSON body")
     }
 
-    const supabase = await createClient();
+    const parsedBody = createMessageBodySchema.safeParse(body)
+    if (!parsedBody.success) {
+        return safeJsonResponse(400, "Invalid message payload")
+    }
+
+    const { conversationId, role, content } = parsedBody.data
+
+    const supabase = await createClient()
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        return safeJsonResponse(401, "Unauthorized")
+    }
+
+    const limiter = await enforceRateLimit({
+        supabase,
+        scope: "messages:post",
+        userId: user.id,
+        ip: getRequestIp(request),
+        limit: 120,
+        windowMs: 5 * 60 * 1000,
+    })
+
+    if (!limiter.ok) {
+        return NextResponse.json(
+            { error: "Rate limit exceeded. Try again later." },
+            {
+                status: 429,
+                headers: {
+                    "Retry-After": String(limiter.retryAfterSeconds),
+                },
+            }
+        )
+    }
+
+    const { data: conversation, error: conversationError } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .eq("user_id", user.id)
+        .single()
+
+    if (conversationError || !conversation) {
+        return safeJsonResponse(403, "Forbidden")
+    }
 
     const { data, error } = await supabase
         .from("messages")
@@ -46,7 +153,7 @@ export async function POST(request: Request) {
         .single()
 
     if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return safeJsonResponse(500, error.message)
     }
 
     return NextResponse.json(data)
