@@ -5,42 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, BookOpen, Brain, Database, Zap } from "lucide-react";
 import { Sun, Moon } from "lucide-react";
-import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 
 interface Props {
   user: User | null;
 }
 
 export default function HomeClient({ user }: Props) {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window === "undefined") return "light";
-
-    const savedTheme = window.localStorage.getItem("theme");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-
-    return savedTheme === "dark" || (savedTheme !== "light" && prefersDark)
-      ? "dark"
-      : "light";
-  });
+  const { resolvedTheme, setTheme } = useTheme();
   const supabase = createClient();
   const router = useRouter();
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-  }, [theme]);
-
   const toggleTheme = () => {
-    const root = document.documentElement;
-    const nextTheme = theme === "dark" ? "light" : "dark";
-
-    root.classList.toggle("dark", nextTheme === "dark");
-    window.localStorage.setItem("theme", nextTheme);
+    const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
   };
 
@@ -76,11 +56,8 @@ export default function HomeClient({ user }: Props) {
               aria-label="Toggle theme"
               onClick={toggleTheme}
             >
-              {theme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
+              <Sun className="hidden h-4 w-4 dark:block" />
+              <Moon className="h-4 w-4 dark:hidden" />
             </Button>
             {user ? (
               <>

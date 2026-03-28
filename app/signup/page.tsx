@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client"
+import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const supabase = createClient()
+  const supabase = createClient();
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -49,31 +49,32 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <Card className="w-full max-w-md p-8 space-y-6 bg-zinc-900 border border-zinc-800 shadow-xl">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/10 via-background to-background" />
+      <Card className="relative w-full max-w-md space-y-6 border-border/80 p-8 shadow-xl backdrop-blur-sm">
         {/* Header */}
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-semibold text-white">
-            Create your account
-          </h1>
-          <p className="text-sm text-zinc-400">
+          <h1 className="text-2xl font-semibold">Create your account</h1>
+          <p className="text-sm text-muted-foreground">
             Start using ResearchAgent today
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="rounded-md bg-red-500/15 text-red-400 px-3 py-2 text-sm border border-red-500/30">
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {/* Full Name */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-zinc-200">Full name</label>
+          <label className="text-sm font-medium text-foreground/90">
+            Full name
+          </label>
           <Input
             placeholder="John Doe"
-            className="bg-black border-zinc-700 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40"
+            className="bg-background"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
           />
@@ -81,10 +82,12 @@ export default function SignUpPage() {
 
         {/* Username */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-zinc-200">Username</label>
+          <label className="text-sm font-medium text-foreground/90">
+            Username
+          </label>
           <Input
             placeholder="john_doe"
-            className="bg-black border-zinc-700 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40"
+            className="bg-background"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
@@ -92,13 +95,13 @@ export default function SignUpPage() {
 
         {/* Email */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-zinc-200">
+          <label className="text-sm font-medium text-foreground/90">
             Email address
           </label>
           <Input
             type="email"
             placeholder="you@example.com"
-            className="bg-black border-zinc-700 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40"
+            className="bg-background"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -106,11 +109,13 @@ export default function SignUpPage() {
 
         {/* Password */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-zinc-200">Password</label>
+          <label className="text-sm font-medium text-foreground/90">
+            Password
+          </label>
           <Input
             type="password"
             placeholder="Minimum 6 characters"
-            className="bg-black border-zinc-700 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40"
+            className="bg-background"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -119,18 +124,18 @@ export default function SignUpPage() {
         {/* Button */}
         <Button
           onClick={handleSignUp}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium"
+          className="w-full font-medium"
           disabled={loading}
         >
           {loading ? "Creating account..." : "Sign Up"}
         </Button>
 
         {/* Footer */}
-        <p className="text-sm text-center text-zinc-400">
+        <p className="text-sm text-center text-muted-foreground">
           Already have an account?{" "}
           <Link
             href="/signin"
-            className="text-blue-400 hover:text-blue-300 underline-offset-4 hover:underline"
+            className="text-primary hover:text-primary/80 underline-offset-4 hover:underline"
           >
             Sign in
           </Link>

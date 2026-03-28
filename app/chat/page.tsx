@@ -137,19 +137,19 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-950 text-white">
+    <div className="flex h-screen bg-background text-foreground">
       {/* ================= SIDEBAR ================= */}
-      <div className="w-72 border-r border-gray-800 flex flex-col">
-        <div className="p-4 border-b border-gray-800 space-y-3">
+      <div className="flex w-72 flex-col border-r border-border/70 bg-card/60 backdrop-blur">
+        <div className="space-y-3 border-b border-border/70 p-4">
           <Link href="/dashboard">
-            <button className="w-full bg-gray-800 py-2 rounded-lg hover:bg-gray-700">
+            <button className="w-full rounded-lg border border-border/70 bg-background py-2 transition hover:bg-accent hover:text-accent-foreground">
               Dashboard
             </button>
           </Link>
 
           <button
             onClick={createNewConversation}
-            className="w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700"
+            className="w-full rounded-lg bg-primary py-2 text-primary-foreground transition hover:bg-primary/90"
           >
             New Chat
           </button>
@@ -158,7 +158,7 @@ export default function ChatPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search conversations"
-            className="w-full bg-gray-900 px-3 py-2 rounded-lg outline-none text-sm"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
           />
         </div>
 
@@ -166,7 +166,7 @@ export default function ChatPage() {
           {filteredConversations.map((conv) => (
             <div
               key={conv.id}
-              className="px-4 py-3 text-sm border-b border-gray-800 hover:bg-gray-800"
+              className="border-b border-border/60 px-4 py-3 text-sm transition hover:bg-accent/50"
             >
               <div className="flex items-center justify-between gap-2">
                 <Link href={`/chat/${conv.id}`} className="flex-1 truncate">
@@ -175,13 +175,13 @@ export default function ChatPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => renameConversation(conv.id, conv.title)}
-                    className="text-xs text-blue-400 hover:text-blue-300"
+                    className="text-xs text-primary hover:text-primary/80"
                   >
                     Rename
                   </button>
                   <button
                     onClick={() => deleteConversation(conv.id)}
-                    className="text-xs text-red-400 hover:text-red-300"
+                    className="text-xs text-destructive hover:text-destructive/80"
                   >
                     Delete
                   </button>
@@ -191,27 +191,27 @@ export default function ChatPage() {
           ))}
 
           {filteredConversations.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-gray-400">
+            <div className="px-4 py-6 text-sm text-muted-foreground">
               No matching conversations
             </div>
           ) : null}
         </div>
 
         {/* USER INFO */}
-        <div className="p-4 border-t border-gray-800 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold">
+        <div className="flex items-center gap-3 border-t border-border/70 p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
             {userName?.charAt(0)}
           </div>
           <div className="text-sm">
             <p className="font-semibold">{userName}</p>
-            <p className="text-gray-400 text-xs">{userEmail}</p>
+            <p className="text-xs text-muted-foreground">{userEmail}</p>
           </div>
         </div>
       </div>
 
       {/* ================= MAIN CHAT ================= */}
       <div className="flex flex-col flex-1">
-        <div className="p-4 border-b border-gray-800 font-semibold">
+        <div className="border-b border-border/70 bg-card/60 p-4 font-semibold backdrop-blur">
           AI Chat Assistant
         </div>
 
@@ -219,13 +219,13 @@ export default function ChatPage() {
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center space-y-6">
             <h1 className="text-3xl font-bold">Start a New Conversation</h1>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               Click &quot;New Chat&quot; to begin chatting with the AI.
             </p>
 
             <button
               onClick={createNewConversation}
-              className="bg-blue-600 px-6 py-3 rounded-lg hover:bg-blue-700"
+              className="rounded-lg bg-primary px-6 py-3 text-primary-foreground transition hover:bg-primary/90"
             >
               Start Chat
             </button>

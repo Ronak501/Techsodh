@@ -13,16 +13,16 @@ export default function PlaygroundPage() {
   const [topK, setTopK] = useState("5");
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="border-b border-zinc-800 bg-zinc-950">
+      <div className="border-b border-border/70 bg-card/60 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="text-zinc-300 hover:text-white"
+              className="text-muted-foreground hover:text-foreground"
             >
               <Link href="/" className="gap-2 flex items-center">
                 <ArrowLeft className="w-4 h-4" />
@@ -31,7 +31,9 @@ export default function PlaygroundPage() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold">API Playground</h1>
-              <p className="text-zinc-400">Test the ResearchAgent API</p>
+              <p className="text-muted-foreground">
+                Test the ResearchAgent API
+              </p>
             </div>
           </div>
         </div>
@@ -41,36 +43,36 @@ export default function PlaygroundPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid lg:grid-cols-2 gap-10">
           {/* Request */}
-          <Card className="p-6 bg-zinc-900 border border-zinc-800 shadow-lg space-y-6">
+          <Card className="space-y-6 border-border/80 p-6 shadow-lg">
             <h2 className="font-semibold text-lg">Request</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm mb-2 text-zinc-300">
+                <label className="mb-2 block text-sm text-foreground/90">
                   Research Query
                 </label>
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Enter your research query"
-                  className="bg-black border-zinc-700 text-white focus:border-blue-500 focus:ring-blue-500/30"
+                  className="bg-background"
                 />
               </div>
 
               <div>
-                <label className="block text-sm mb-2 text-zinc-300">
+                <label className="mb-2 block text-sm text-foreground/90">
                   Top-K Results
                 </label>
                 <Input
                   type="number"
                   value={topK}
                   onChange={(e) => setTopK(e.target.value)}
-                  className="bg-black border-zinc-700 text-white focus:border-blue-500 focus:ring-blue-500/30"
+                  className="bg-background"
                 />
               </div>
 
               <div>
-                <label className="block text-sm mb-2 text-zinc-300">
+                <label className="mb-2 block text-sm text-foreground/90">
                   Active Agents
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -78,7 +80,7 @@ export default function PlaygroundPage() {
                     <Badge
                       key={agent}
                       variant="outline"
-                      className="cursor-pointer border-zinc-700 text-zinc-300 hover:bg-blue-500/10 hover:border-blue-500"
+                      className="cursor-pointer border-border/80 text-muted-foreground hover:border-primary/50 hover:bg-primary/10 hover:text-foreground"
                     >
                       {agent}
                     </Badge>
@@ -87,10 +89,7 @@ export default function PlaygroundPage() {
               </div>
             </div>
 
-            <Button
-              size="lg"
-              className="w-full bg-blue-600 hover:bg-blue-500 gap-2"
-            >
+            <Button size="lg" className="w-full gap-2">
               <PlayCircle className="w-4 h-4" />
               Send Request
             </Button>
@@ -98,20 +97,20 @@ export default function PlaygroundPage() {
 
           {/* Response */}
           <div className="space-y-4">
-            <Card className="p-6 bg-zinc-900 border border-zinc-800 shadow-lg">
+            <Card className="border-border/80 p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-lg">Response</h2>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-zinc-400 hover:text-white gap-2"
+                  className="gap-2 text-muted-foreground hover:text-foreground"
                 >
                   <Copy className="w-4 h-4" />
                   Copy
                 </Button>
               </div>
 
-              <div className="bg-black border border-zinc-800 rounded-md p-4 text-sm font-mono text-zinc-300 overflow-auto max-h-96">
+              <div className="max-h-96 overflow-auto rounded-md border border-border/80 bg-muted/40 p-4 font-mono text-sm text-foreground">
                 <pre>{`{
   "query": "${query}",
   "status": "success",
@@ -135,10 +134,10 @@ export default function PlaygroundPage() {
               </div>
             </Card>
 
-            <Card className="p-4 bg-zinc-900 border border-zinc-800">
-              <p className="text-xs text-zinc-400">
+            <Card className="border-border/80 p-4">
+              <p className="text-xs text-muted-foreground">
                 Status:
-                <Badge className="ml-2 bg-green-600">200 OK</Badge>
+                <Badge className="ml-2 bg-green-600 text-white">200 OK</Badge>
               </p>
             </Card>
           </div>
