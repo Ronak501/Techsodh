@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
-import { callGemini } from "../chat/route"
+import { callGemini } from "@/lib/chat-gemini"
 import {
     enforceRateLimit,
     getRequestIp,

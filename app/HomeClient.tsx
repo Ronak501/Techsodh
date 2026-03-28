@@ -15,29 +15,25 @@ interface Props {
 }
 
 export default function HomeClient({ user }: Props) {
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+
+    const savedTheme = window.localStorage.getItem("theme");
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+
+    return savedTheme === "dark" || (savedTheme !== "light" && prefersDark)
+      ? "dark"
+      : "light";
+  });
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
     const root = document.documentElement;
-    const savedTheme = window.localStorage.getItem("theme");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-    const nextTheme =
-      savedTheme === "dark" || (savedTheme !== "light" && prefersDark)
-        ? "dark"
-        : "light";
-
-    root.classList.toggle("dark", nextTheme === "dark");
-    setTheme(nextTheme);
-
-    // Hydration guard for theme-dependent UI
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
+    root.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
   const toggleTheme = () => {
     const root = document.documentElement;
@@ -60,8 +56,6 @@ export default function HomeClient({ user }: Props) {
     router.replace("/");
     router.refresh();
   };
-
-  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -48,10 +48,12 @@ export async function POST(request: Request) {
     return safeJsonResponse(401, "Unauthorized")
   }
 
+  const userId = user.id
+
   const limiter = await enforceRateLimit({
     supabase,
     scope: "research",
-    userId: user.id,
+    userId,
     ip: getRequestIp(request),
     limit: 20,
     windowMs: 60 * 60 * 1000,
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
     const { data: pref } = await supabase
       .from("research_user_preferences")
       .select("preferred_template, output_style, depth, model_name")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle()
 
     const settings: ResearchSettings = mergeSettings(
@@ -125,7 +127,7 @@ export async function POST(request: Request) {
     const { data: cached } = await supabase
       .from("research_query_cache")
       .select("report_payload")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("cache_key", cacheKey)
       .eq("mode", mode)
       .eq("template", template)
@@ -150,7 +152,7 @@ export async function POST(request: Request) {
         .from("research_reports")
         .insert([
           {
-            user_id: user.id,
+            user_id: userId,
             query,
             status: "completed",
             research_mode: mode,
@@ -199,7 +201,7 @@ export async function POST(request: Request) {
       .from("research_reports")
       .insert([
         {
-          user_id: user.id,
+          user_id: userId,
           query,
           status: "in_progress",
           research_mode: mode,
@@ -248,7 +250,7 @@ export async function POST(request: Request) {
         latency_ms: latencyMs,
       })
       .eq("id", researchId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
 
     if (updateError) {
       throw new Error("Failed to persist research result")
@@ -256,7 +258,7 @@ export async function POST(request: Request) {
 
     await supabase.from("research_query_cache").upsert(
       {
-        user_id: user.id,
+        user_id: userId,
         cache_key: cacheKey,
         mode,
         template,
@@ -327,7 +329,7 @@ export async function POST(request: Request) {
             last_error: message,
           })
           .eq("id", researchId)
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
       }
 
       console.error(err)
@@ -365,7 +367,7 @@ export async function POST(request: Request) {
               last_error: message,
             })
             .eq("id", researchId)
-            .eq("user_id", user.id)
+            .eq("user_id", userId)
         }
 
         console.error(err)
