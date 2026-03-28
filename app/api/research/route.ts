@@ -14,6 +14,11 @@ import {
   type ResearchMode,
 } from "@/lib/research-engine"
 import type { ResearchSettings, ResearchTemplate } from "@/lib/research-types"
+import {
+  consumeMonthlyTokens,
+  enforceSubscriptionAndTokenAccess,
+  estimateTokensFromText,
+} from "@/lib/subscription-access"
 
 const researchRequestSchema = z.object({
   query: z.string().trim().min(5).max(2000),
@@ -82,6 +87,20 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data
+
+  const projectedTokens =
+    estimateTokensFromText(input.query) +
+    (input.settings?.depth === "deep" ? 12000 : 6000)
+
+  const access = await enforceSubscriptionAndTokenAccess(supabase, {
+    userId,
+    requestedTokens: projectedTokens,
+    feature: "research",
+  })
+
+  if (!access.ok) {
+    return NextResponse.json(access.payload, { status: access.status })
+  }
 
   async function executeResearch(
     inputData: ResearchRequestInput,
@@ -233,6 +252,16 @@ export async function POST(request: Request) {
     )
 
     const latencyMs = Date.now() - startedAt
+
+    try {
+      await consumeMonthlyTokens(supabase, {
+        userId,
+        promptTokens: pipeline.usage.prompt_tokens,
+        completionTokens: pipeline.usage.completion_tokens,
+      })
+    } catch (error) {
+      console.error("Failed to record research token usage", error)
+    }
 
     const { error: updateError } = await supabase
       .from("research_reports")

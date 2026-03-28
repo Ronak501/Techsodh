@@ -4,6 +4,10 @@ import { createClient } from "@/utils/supabase/server"
 import { parseJsonSafely, safeJsonResponse } from "@/lib/api-security"
 import { mergeSettings, resolveTemplate, type ResearchMode } from "@/lib/research-engine"
 import type { ResearchSettings, ResearchTemplate } from "@/lib/research-types"
+import {
+  enforceSubscriptionAndTokenAccess,
+  estimateTokensFromText,
+} from "@/lib/subscription-access"
 
 const enqueueSchema = z.object({
   query: z.string().trim().min(5).max(2000),
@@ -68,6 +72,20 @@ export async function POST(request: Request) {
   }
 
   const { query, mode, template: explicitTemplate, settings: explicitSettings } = parsed.data
+
+  const projectedTokens =
+    estimateTokensFromText(query) +
+    (explicitSettings?.depth === "deep" ? 12000 : 6000)
+
+  const access = await enforceSubscriptionAndTokenAccess(supabase, {
+    userId: user.id,
+    requestedTokens: projectedTokens,
+    feature: "research",
+  })
+
+  if (!access.ok) {
+    return NextResponse.json(access.payload, { status: access.status })
+  }
 
   const { data: pref } = await supabase
     .from("research_user_preferences")

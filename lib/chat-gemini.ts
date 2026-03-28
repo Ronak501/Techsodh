@@ -3,6 +3,12 @@ export type GeminiHistoryMessage = {
   content: string
 }
 
+export type GeminiChatResult = {
+  reply: string
+  promptTokens: number
+  completionTokens: number
+}
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
 const GEMINI_API = process.env.GEMINI_API!
 
@@ -27,7 +33,9 @@ function cleanAIResponse(text: string) {
     .replace(/\n{3,}/g, "\n\n")
 }
 
-export async function callGemini(history: GeminiHistoryMessage[]) {
+export async function callGemini(
+  history: GeminiHistoryMessage[]
+): Promise<GeminiChatResult> {
   if (!GEMINI_API || !GEMINI_API_KEY) {
     throw new Error("Gemini is not configured")
   }
@@ -78,5 +86,9 @@ Rules:
   }
 
   const raw = data.candidates[0].content.parts[0].text
-  return cleanAIResponse(raw)
+  return {
+    reply: cleanAIResponse(raw),
+    promptTokens: Number(data.usageMetadata?.promptTokenCount || 0),
+    completionTokens: Number(data.usageMetadata?.candidatesTokenCount || 0),
+  }
 }

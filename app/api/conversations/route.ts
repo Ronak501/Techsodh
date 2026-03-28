@@ -8,6 +8,11 @@ import {
     parseJsonSafely,
     safeJsonResponse,
 } from "@/lib/api-security"
+import {
+    consumeMonthlyTokens,
+    enforceSubscriptionAndTokenAccess,
+    estimateTokensFromText,
+} from "@/lib/subscription-access"
 
 const createConversationMessageSchema = z.object({
     message: z.string().trim().min(1).max(4000),
@@ -123,6 +128,34 @@ export async function POST(request: Request) {
         }
     }
 
+    // Fetch history
+    const { data: history } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", currentConversationId)
+        .order("created_at", { ascending: true })
+
+    const safeHistory = Array.isArray(history)
+        ? history.map((entry) => ({
+              role: entry.role as "user" | "assistant",
+              content: String(entry.content || ""),
+          }))
+        : []
+
+    const projectedPromptTokens = estimateTokensFromText(
+        [...safeHistory.map((entry) => entry.content), message].join("\n")
+    )
+
+    const access = await enforceSubscriptionAndTokenAccess(supabase, {
+        userId: user.id,
+        requestedTokens: projectedPromptTokens + 800,
+        feature: "chat",
+    })
+
+    if (!access.ok) {
+        return NextResponse.json(access.payload, { status: access.status })
+    }
+
     // Insert user message
     await supabase.from("messages").insert([
         {
@@ -132,26 +165,33 @@ export async function POST(request: Request) {
         },
     ])
 
-    // Fetch history
-    const { data: history } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", currentConversationId)
-        .order("created_at", { ascending: true })
-
-    const reply = await callGemini(history || [])
+    const completion = await callGemini([
+        ...safeHistory,
+        { role: "user" as const, content: message },
+    ])
 
     // Save assistant reply
     await supabase.from("messages").insert([
         {
             conversation_id: currentConversationId,
             role: "assistant",
-            content: reply,
+            content: completion.reply,
         },
     ])
 
+    try {
+        await consumeMonthlyTokens(supabase, {
+            userId: user.id,
+            promptTokens: completion.promptTokens || projectedPromptTokens,
+            completionTokens:
+                completion.completionTokens || estimateTokensFromText(completion.reply),
+        })
+    } catch (error) {
+        console.error("Failed to record token usage", error)
+    }
+
     return NextResponse.json({
-        reply,
+        reply: completion.reply,
         conversationId: currentConversationId, // 👈 IMPORTANT
     })
 }

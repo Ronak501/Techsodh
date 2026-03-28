@@ -8,6 +8,11 @@ import {
     parseJsonSafely,
     safeJsonResponse,
 } from "@/lib/api-security"
+import {
+    consumeMonthlyTokens,
+    enforceSubscriptionAndTokenAccess,
+    estimateTokensFromText,
+} from "@/lib/subscription-access"
 
 const chatRequestSchema = z.object({
     message: z.string().trim().min(1).max(4000),
@@ -76,38 +81,53 @@ export async function POST(request: Request) {
         return safeJsonResponse(403, "Forbidden")
     }
 
-    // Insert user message (NOW RLS WILL PASS)
-    const { error: insertError } = await supabase
-        .from("messages")
-        .insert([
-            {
-                conversation_id: conversationId,
-                role: "user",
-                content: message,
-            },
-        ])
-
-    if (insertError) {
-        console.error("Insert failed:", insertError)
-        return safeJsonResponse(500, insertError.message)
-    }
-
-    // Fetch history
     const { data: history } = await supabase
         .from("messages")
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true })
 
-    const safeHistory =
-        history && history.length > 0
-            ? history
-            : [{ role: "user", content: message }]
+    const safeHistory = Array.isArray(history)
+        ? history.map((entry) => ({
+              role: entry.role as "user" | "assistant",
+              content: String(entry.content || ""),
+          }))
+        : []
+
+    const projectedPromptTokens = estimateTokensFromText(
+        [...safeHistory.map((entry) => entry.content), message].join("\n")
+    )
+
+    const access = await enforceSubscriptionAndTokenAccess(supabase, {
+        userId: user.id,
+        requestedTokens: projectedPromptTokens + 800,
+        feature: "chat",
+    })
+
+    if (!access.ok) {
+        return NextResponse.json(access.payload, { status: access.status })
+    }
+
+    // Insert user message after subscription and quota access checks.
+    const { error: insertError } = await supabase.from("messages").insert([
+        {
+            conversation_id: conversationId,
+            role: "user",
+            content: message,
+        },
+    ])
+
+    if (insertError) {
+        console.error("Insert failed:", insertError)
+        return safeJsonResponse(500, insertError.message)
+    }
+
+    const fullHistory = [...safeHistory, { role: "user" as const, content: message }]
 
     // Call Gemini
-    const reply = await callGemini(safeHistory)
+    const completion = await callGemini(fullHistory)
 
-    if (!reply) {
+    if (!completion.reply) {
         return safeJsonResponse(500, "AI returned empty response")
     }
 
@@ -116,9 +136,26 @@ export async function POST(request: Request) {
         {
             conversation_id: conversationId,
             role: "assistant",
-            content: reply,
+            content: completion.reply,
         },
     ])
 
-    return NextResponse.json({ reply })
+    try {
+        await consumeMonthlyTokens(supabase, {
+            userId: user.id,
+            promptTokens: completion.promptTokens || projectedPromptTokens,
+            completionTokens: completion.completionTokens || estimateTokensFromText(completion.reply),
+        })
+    } catch (error) {
+        console.error("Failed to record token usage", error)
+    }
+
+    return NextResponse.json({
+        reply: completion.reply,
+        usage: {
+            prompt_tokens: completion.promptTokens || projectedPromptTokens,
+            completion_tokens:
+                completion.completionTokens || estimateTokensFromText(completion.reply),
+        },
+    })
 }

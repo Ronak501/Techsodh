@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { createAdminClient } from "@/utils/supabase/admin"
 import { runResearchPipeline, type ResearchMode } from "@/lib/research-engine"
 import type { ResearchSettings, ResearchTemplate } from "@/lib/research-types"
+import {
+  consumeMonthlyTokens,
+  enforceSubscriptionAndTokenAccess,
+} from "@/lib/subscription-access"
 
 const WORKER_TOKEN = process.env.RESEARCH_WORKER_TOKEN
 
@@ -61,6 +65,27 @@ export async function POST(request: Request) {
       .eq("id", job.id)
 
     try {
+      const workerAccess = await enforceSubscriptionAndTokenAccess(supabase, {
+        userId: job.user_id,
+        requestedTokens: payload.settings.depth === "deep" ? 12000 : 6000,
+        feature: "research",
+      })
+
+      if (!workerAccess.ok) {
+        await supabase
+          .from("research_reports")
+          .update({
+            status: "failed",
+            last_error: workerAccess.payload.error,
+            error_message: workerAccess.payload.error,
+            finished_at: new Date().toISOString(),
+          })
+          .eq("id", job.id)
+
+        processed.push({ id: job.id, status: "failed", retry_count: job.retry_count || 0 })
+        continue
+      }
+
       const startedAt = Date.now()
       const pipeline = await runResearchPipeline({
         query: payload.query,
@@ -68,6 +93,16 @@ export async function POST(request: Request) {
         template: payload.template,
         settings: payload.settings,
       })
+
+      try {
+        await consumeMonthlyTokens(supabase, {
+          userId: job.user_id,
+          promptTokens: pipeline.usage.prompt_tokens,
+          completionTokens: pipeline.usage.completion_tokens,
+        })
+      } catch (usageError) {
+        console.error("Failed to record job token usage", usageError)
+      }
 
       await supabase
         .from("research_reports")

@@ -197,6 +197,19 @@ export default function ChatPage() {
 
       const data = await res.json();
 
+      if (!res.ok) {
+        const errorMessage =
+          typeof data?.error === "string" ? data.error : "Chat request failed";
+
+        if (data?.upgrade_url) {
+          toast.error(`${errorMessage} Upgrade at ${data.upgrade_url}`);
+        } else {
+          toast.error(errorMessage);
+        }
+
+        return;
+      }
+
       const assistantMessage: Message = {
         role: "assistant",
         content: data.reply,

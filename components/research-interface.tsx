@@ -51,6 +51,8 @@ export function ResearchInterface({ setSummaryData }: Props) {
   const [results, setResults] = useState<ResearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [streamProgress, setStreamProgress] = useState<StreamProgress[]>([]);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [upgradeUrl, setUpgradeUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -106,6 +108,8 @@ export function ResearchInterface({ setSummaryData }: Props) {
     setIsSearching(true);
     setHasSearched(true);
     setStreamProgress([]);
+    setApiError(null);
+    setUpgradeUrl(null);
 
     try {
       const response = await fetch("/api/research", {
@@ -128,6 +132,11 @@ export function ResearchInterface({ setSummaryData }: Props) {
 
       if (!response.ok) {
         const errorData = await response.json();
+        setUpgradeUrl(
+          typeof errorData?.upgrade_url === "string"
+            ? errorData.upgrade_url
+            : null,
+        );
         throw new Error(errorData.error || "Unknown error");
       }
 
@@ -190,7 +199,8 @@ export function ResearchInterface({ setSummaryData }: Props) {
           id: completed.id || crypto.randomUUID(),
           title: "AI Research Report",
           authors: "AI Research Agent",
-          abstract: generatedReport?.executive_summary || "No summary available",
+          abstract:
+            generatedReport?.executive_summary || "No summary available",
           citations: Array.isArray(generatedReport?.references)
             ? generatedReport.references.length
             : 0,
@@ -201,6 +211,7 @@ export function ResearchInterface({ setSummaryData }: Props) {
       setSummaryData(completed);
     } catch (error) {
       console.error("API Error:", error);
+      setApiError(error instanceof Error ? error.message : "Request failed");
     } finally {
       setIsSearching(false);
     }
@@ -218,7 +229,9 @@ export function ResearchInterface({ setSummaryData }: Props) {
       <Card className="p-8 border-border/50 bg-card/50">
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-3">Research Mode</label>
+            <label className="block text-sm font-medium mb-3">
+              Research Mode
+            </label>
             <div className="grid sm:grid-cols-2 gap-2">
               <Button
                 type="button"
@@ -260,14 +273,17 @@ export function ResearchInterface({ setSummaryData }: Props) {
 
           <div className="grid sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Output Style</label>
+              <label className="block text-sm font-medium mb-2">
+                Output Style
+              </label>
               <select
                 className="h-10 w-full rounded-md border bg-background px-3 text-sm"
                 value={preferences.output_style}
                 onChange={(e) =>
                   setPreferences((prev) => ({
                     ...prev,
-                    output_style: e.target.value as ResearchPreferences["output_style"],
+                    output_style: e.target
+                      .value as ResearchPreferences["output_style"],
                   }))
                 }
                 disabled={preferencesLoading}
@@ -398,6 +414,17 @@ export function ResearchInterface({ setSummaryData }: Props) {
               </li>
             ))}
           </ul>
+        </Card>
+      ) : null}
+
+      {apiError ? (
+        <Card className="p-4 border-destructive/40 bg-destructive/10">
+          <p className="text-sm text-destructive">{apiError}</p>
+          {upgradeUrl ? (
+            <Button asChild size="sm" className="mt-3">
+              <Link href={upgradeUrl}>Upgrade Subscription</Link>
+            </Button>
+          ) : null}
         </Card>
       ) : null}
 
