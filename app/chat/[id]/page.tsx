@@ -2,15 +2,25 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
+import { createClient } from "@/utils/supabase/client";
+import { Button } from "@/components/ui/button";
+import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
+import {
+  ArrowRight,
+  LayoutDashboard,
+  MessageSquareText,
+  Plus,
+  Search,
+  Sparkles,
+} from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
@@ -24,7 +34,7 @@ type Conversation = {
 };
 
 export default function ChatPage() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
@@ -39,12 +49,10 @@ export default function ChatPage() {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  /* ---------------- SCROLL ---------------- */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* ---------------- FETCH USER ---------------- */
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -58,9 +66,9 @@ export default function ChatPage() {
     };
 
     getUser();
-  }, []);
+  }, [supabase]);
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -69,7 +77,7 @@ export default function ChatPage() {
     const { data, error } = await supabase
       .from("conversations")
       .select("*")
-      .eq("user_id", user.id) // VERY IMPORTANT
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -78,18 +86,16 @@ export default function ChatPage() {
     }
 
     setConversations(data || []);
-  };
+  }, [supabase]);
 
-  /* ---------------- FETCH CONVERSATIONS ---------------- */
   useEffect(() => {
-    fetchConversations();
-  }, []);
+    void fetchConversations();
+  }, [fetchConversations]);
 
   const filteredConversations = conversations.filter((conversation) =>
     conversation.title.toLowerCase().includes(search.toLowerCase()),
   );
 
-  /* ---------------- CREATE CONVERSATION ---------------- */
   const createNewConversation = async () => {
     const {
       data: { user },
@@ -107,7 +113,7 @@ export default function ChatPage() {
       .select()
       .single();
 
-    if (error) {
+    if (error || !data) {
       toast.error("Failed to create conversation");
       return;
     }
@@ -115,7 +121,6 @@ export default function ChatPage() {
     router.push(`/chat/${data.id}`);
   };
 
-  /* ---------------- RENAME CONVERSATION ---------------- */
   const renameConversation = async (id: string, currentTitle: string) => {
     const newTitle = prompt("Enter new title:", currentTitle)?.trim();
     if (!newTitle) return;
@@ -135,7 +140,6 @@ export default function ChatPage() {
     fetchConversations();
   };
 
-  /* ---------------- DELETE CONVERSATION ---------------- */
   const deleteConversation = async (id: string) => {
     const confirmDelete = confirm(
       "Are you sure you want to delete this conversation?",
@@ -155,7 +159,6 @@ export default function ChatPage() {
 
     toast.success("Conversation deleted");
 
-    // If deleted conversation is currently open → redirect
     if (conversationId === id) {
       router.push("/chat");
     }
@@ -163,7 +166,6 @@ export default function ChatPage() {
     fetchConversations();
   };
 
-  /* ---------------- FETCH MESSAGES ---------------- */
   useEffect(() => {
     if (!conversationId) return;
 
@@ -172,7 +174,6 @@ export default function ChatPage() {
       .then((data) => setMessages(data || []));
   }, [conversationId]);
 
-  /* ---------------- SEND MESSAGE ---------------- */
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -224,42 +225,44 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      {/* ================= SIDEBAR ================= */}
-      <div className="flex w-72 flex-col border-r border-border/70 bg-card/60 backdrop-blur">
+    <div className="chat-surface flex h-screen bg-background text-foreground">
+      <aside className="glass-panel m-3 hidden w-80 flex-col overflow-hidden rounded-3xl lg:flex">
         <div className="space-y-3 border-b border-border/70 p-4">
-          {/* Dashboard Button */}
           <Link href="/dashboard">
-            <button className="w-full rounded-lg border border-border/70 bg-background py-2 transition hover:bg-accent hover:text-accent-foreground">
+            <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background py-2 transition hover:bg-accent hover:text-accent-foreground">
+              <LayoutDashboard className="h-4 w-4" />
               Dashboard
             </button>
           </Link>
 
-          {/* New Chat Button */}
           <button
             onClick={createNewConversation}
-            className="mt-2 w-full rounded-lg bg-primary py-2 text-primary-foreground transition hover:bg-primary/90"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2 text-primary-foreground transition hover:bg-primary/90"
           >
+            <Plus className="h-4 w-4" />
             New Chat
           </button>
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations"
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
-          />
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search conversations"
+              className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {filteredConversations.map((conv) => (
             <div
               key={conv.id}
-              className={`flex items-center justify-between border-b border-border/60 px-4 py-3 text-sm transition hover:bg-accent/50 ${
-                conv.id === conversationId ? "bg-accent/70" : ""
+              className={`flex items-center justify-between border-b border-border/60 px-4 py-3 text-sm transition hover:bg-accent/35 ${
+                conv.id === conversationId ? "bg-accent/55" : ""
               }`}
             >
-              <Link href={`/chat/${conv.id}`} className="flex-1">
+              <Link href={`/chat/${conv.id}`} className="flex-1 truncate">
                 {conv.title}
               </Link>
 
@@ -288,7 +291,6 @@ export default function ChatPage() {
           ) : null}
         </div>
 
-        {/* USER INFO */}
         <div className="flex items-center gap-3 border-t border-border/70 p-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
             {userName?.charAt(0)}
@@ -298,106 +300,144 @@ export default function ChatPage() {
             <p className="text-xs text-muted-foreground">{userEmail}</p>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* ================= MAIN CHAT ================= */}
-      <div className="flex flex-col flex-1">
-        <div className="border-b border-border/70 bg-card/60 p-4 font-semibold backdrop-blur">
-          AI Chat Assistant
-        </div>
+      <main className="flex min-w-0 flex-1 flex-col p-3 lg:p-4">
+        <div className="glass-panel rise-in flex h-full flex-col rounded-3xl">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Chat Session
+              </p>
+              <h1 className="text-lg font-semibold">AI Chat Assistant</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <MobileNavDrawer
+                title="Chat Navigation"
+                items={[
+                  { href: "/", label: "Home" },
+                  { href: "/dashboard", label: "Dashboard" },
+                  { href: "/research", label: "Research" },
+                  { href: "/chat", label: "Chat" },
+                ]}
+              />
+              <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-primary">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                3D mode
+              </span>
+            </div>
+          </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`max-w-3xl rounded-xl px-6 py-4 shadow-md ${
-                msg.role === "user"
-                  ? "ml-auto bg-primary text-primary-foreground"
-                  : "border border-border/70 bg-card"
-              }`}
-            >
-              <div className="prose max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-pre:bg-muted prose-code:text-foreground">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight, rehypeRaw]}
-                  components={{
-                    h1: ({ ...props }) => (
-                      <h1 className="text-3xl font-bold mt-6 mb-4" {...props} />
-                    ),
-                    h2: ({ ...props }) => (
-                      <h2
-                        className="text-2xl font-semibold mt-5 mb-3"
-                        {...props}
-                      />
-                    ),
-                    h3: ({ ...props }) => (
-                      <h3
-                        className="text-xl font-semibold mt-4 mb-2"
-                        {...props}
-                      />
-                    ),
-                    p: ({ ...props }) => (
-                      <p className="mb-3 leading-relaxed" {...props} />
-                    ),
-                    ul: ({ ...props }) => (
-                      <ul className="list-disc pl-6 mb-3" {...props} />
-                    ),
-                    ol: ({ ...props }) => (
-                      <ol className="list-decimal pl-6 mb-3" {...props} />
-                    ),
-                    code(props) {
-                      const { children, className } = props;
-                      const isInline = !className;
+          <div className="flex-1 space-y-4 overflow-y-auto p-6">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`max-w-3xl rounded-xl px-6 py-4 shadow-md ${
+                  msg.role === "user"
+                    ? "ml-auto bg-primary text-primary-foreground"
+                    : "glass-panel border-border/70"
+                }`}
+              >
+                <div className="prose max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-pre:bg-muted prose-code:text-foreground">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                    components={{
+                      h1: ({ ...props }) => (
+                        <h1
+                          className="mb-4 mt-6 text-3xl font-bold"
+                          {...props}
+                        />
+                      ),
+                      h2: ({ ...props }) => (
+                        <h2
+                          className="mb-3 mt-5 text-2xl font-semibold"
+                          {...props}
+                        />
+                      ),
+                      h3: ({ ...props }) => (
+                        <h3
+                          className="mb-2 mt-4 text-xl font-semibold"
+                          {...props}
+                        />
+                      ),
+                      p: ({ ...props }) => (
+                        <p className="mb-3 leading-relaxed" {...props} />
+                      ),
+                      ul: ({ ...props }) => (
+                        <ul className="mb-3 list-disc pl-6" {...props} />
+                      ),
+                      ol: ({ ...props }) => (
+                        <ol className="mb-3 list-decimal pl-6" {...props} />
+                      ),
+                      code(props) {
+                        const { children, className } = props;
+                        const isInline = !className;
 
-                      if (isInline) {
+                        if (isInline) {
+                          return (
+                            <code className="rounded bg-muted px-1 py-0.5 text-sm text-foreground">
+                              {children}
+                            </code>
+                          );
+                        }
+
                         return (
-                          <code className="rounded bg-muted px-1 py-0.5 text-sm text-foreground">
-                            {children}
-                          </code>
+                          <pre className="mb-4 overflow-x-auto rounded-lg border border-border/70 bg-muted p-4">
+                            <code className={className}>{children}</code>
+                          </pre>
                         );
-                      }
-
-                      return (
-                        <pre className="mb-4 overflow-x-auto rounded-lg border border-border/70 bg-muted p-4">
-                          <code className={className}>{children}</code>
-                        </pre>
-                      );
-                    },
-                  }}
-                >
-                  {msg.content}
-                </ReactMarkdown>
+                      },
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
               </div>
+            ))}
+
+            {loading && (
+              <div className="glass-panel max-w-xl rounded-lg border border-border/70 px-4 py-3 text-muted-foreground">
+                Thinking...
+              </div>
+            )}
+
+            <div ref={bottomRef} />
+          </div>
+
+          <div className="border-t border-border/70 p-4 backdrop-blur">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                placeholder="Type your message..."
+                className="flex-1 rounded-lg border border-input bg-background px-4 py-2 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
+              />
+              <button
+                onClick={sendMessage}
+                disabled={loading}
+                className="rounded-lg bg-primary px-6 py-2 text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+              >
+                <span className="inline-flex items-center gap-2">
+                  Send
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </button>
             </div>
-          ))}
 
-          {loading && (
-            <div className="max-w-xl rounded-lg border border-border/70 bg-card px-4 py-3 text-muted-foreground">
-              Thinking...
+            <div className="mt-3 lg:hidden">
+              <Button asChild size="sm" variant="outline" className="w-full">
+                <Link href="/chat" className="gap-2">
+                  <MessageSquareText className="h-4 w-4" />
+                  Open Conversation List
+                </Link>
+              </Button>
             </div>
-          )}
-
-          <div ref={bottomRef} />
+          </div>
         </div>
-
-        <div className="flex gap-2 border-t border-border/70 bg-card/60 p-4 backdrop-blur">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Type your message..."
-            className="flex-1 rounded-lg border border-input bg-background px-4 py-2 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
-          />
-          <button
-            onClick={sendMessage}
-            disabled={loading}
-            className="rounded-lg bg-primary px-6 py-2 text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-          >
-            Send
-          </button>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

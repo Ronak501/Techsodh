@@ -2,11 +2,21 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
+import { Button } from "@/components/ui/button";
+import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
+import {
+  ArrowRight,
+  LayoutDashboard,
+  MessageSquareText,
+  Plus,
+  Search,
+  Sparkles,
+} from "lucide-react";
 
 type Conversation = {
   id: string;
@@ -15,7 +25,7 @@ type Conversation = {
 };
 
 export default function ChatPage() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const router = useRouter();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -25,7 +35,6 @@ export default function ChatPage() {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  /* ---------------- FETCH USER ---------------- */
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -38,11 +47,10 @@ export default function ChatPage() {
       setUserEmail(user.email || "");
     };
 
-    getUser();
-  }, []);
+    void getUser();
+  }, [supabase]);
 
-  /* ---------------- FETCH CONVERSATIONS ---------------- */
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -60,19 +68,20 @@ export default function ChatPage() {
     }
 
     setConversations(data || []);
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    const loadConversations = async () => {
+      await fetchConversations();
+    };
+
+    void loadConversations();
+  }, [fetchConversations]);
 
   const filteredConversations = conversations.filter((conversation) =>
     conversation.title.toLowerCase().includes(search.toLowerCase()),
   );
 
-  useEffect(() => {
-    // Initial conversation load for static landing shell.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchConversations();
-  }, []);
-
-  /* ---------------- CREATE CONVERSATION ---------------- */
   const createNewConversation = async () => {
     const {
       data: { user },
@@ -137,36 +146,42 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      {/* ================= SIDEBAR ================= */}
-      <div className="flex w-72 flex-col border-r border-border/70 bg-card/60 backdrop-blur">
-        <div className="space-y-3 border-b border-border/70 p-4">
-          <Link href="/dashboard">
-            <button className="w-full rounded-lg border border-border/70 bg-background py-2 transition hover:bg-accent hover:text-accent-foreground">
-              Dashboard
-            </button>
-          </Link>
+    <div className="chat-surface flex h-screen bg-background text-foreground">
+      <aside className="glass-panel m-3 hidden w-80 flex-col overflow-hidden rounded-3xl lg:flex">
+        <div className="space-y-3 border-b border-border/60 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <Link href="/dashboard" className="w-full">
+              <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background/80 py-2 text-sm transition hover:bg-accent hover:text-accent-foreground">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </button>
+            </Link>
+          </div>
 
           <button
             onClick={createNewConversation}
-            className="w-full rounded-lg bg-primary py-2 text-primary-foreground transition hover:bg-primary/90"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2 text-sm text-primary-foreground transition hover:bg-primary/90"
           >
+            <Plus className="h-4 w-4" />
             New Chat
           </button>
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations"
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
-          />
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search conversations"
+              className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {filteredConversations.map((conv) => (
             <div
               key={conv.id}
-              className="border-b border-border/60 px-4 py-3 text-sm transition hover:bg-accent/50"
+              className="border-b border-border/60 px-4 py-3 text-sm transition hover:bg-accent/35"
             >
               <div className="flex items-center justify-between gap-2">
                 <Link href={`/chat/${conv.id}`} className="flex-1 truncate">
@@ -197,7 +212,6 @@ export default function ChatPage() {
           ) : null}
         </div>
 
-        {/* USER INFO */}
         <div className="flex items-center gap-3 border-t border-border/70 p-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
             {userName?.charAt(0)}
@@ -207,33 +221,64 @@ export default function ChatPage() {
             <p className="text-xs text-muted-foreground">{userEmail}</p>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* ================= MAIN CHAT ================= */}
-      <div className="flex flex-col flex-1">
-        <div className="border-b border-border/70 bg-card/60 p-4 font-semibold backdrop-blur">
-          AI Chat Assistant
-        </div>
+      <main className="flex min-w-0 flex-1 flex-col p-3 lg:p-4">
+        <div className="glass-panel rise-in flex h-full flex-col rounded-3xl">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Chat Workspace
+              </p>
+              <h1 className="text-lg font-semibold">AI Chat Assistant</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <MobileNavDrawer
+                title="Chat Navigation"
+                items={[
+                  { href: "/", label: "Home" },
+                  { href: "/dashboard", label: "Dashboard" },
+                  { href: "/research", label: "Research" },
+                  { href: "/chat", label: "Chat" },
+                ]}
+              />
+              <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-primary">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                3D mode
+              </span>
+            </div>
+          </div>
 
-        {/* Center Start State */}
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center space-y-6">
-            <h1 className="text-3xl font-bold">Start a New Conversation</h1>
-            <p className="text-muted-foreground">
-              Click &quot;New Chat&quot; to begin chatting with the AI.
-            </p>
+          <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
+            <div className="w-full max-w-2xl space-y-6 text-center">
+              <div className="mx-auto flex h-18 w-18 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-accent/20 text-primary float-soft">
+                <MessageSquareText className="h-9 w-9" />
+              </div>
+              <h2 className="text-3xl font-semibold tracking-tight text-balance">
+                Start a new conversation with your research assistant
+              </h2>
+              <p className="mx-auto max-w-xl text-muted-foreground">
+                Use chat to validate findings, draft responses, and refine ideas
+                before exporting your final report.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button
+                  onClick={createNewConversation}
+                  className="shadow-lg shadow-primary/25"
+                >
+                  Start Chat
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/research">Open Research</Link>
+                </Button>
+              </div>
 
-            <button
-              onClick={createNewConversation}
-              className="rounded-lg bg-primary px-6 py-3 text-primary-foreground transition hover:bg-primary/90"
-            >
-              Start Chat
-            </button>
-
-            <div ref={bottomRef} />
+              <div ref={bottomRef} />
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

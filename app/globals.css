@@ -196,4 +196,130 @@
       );
     backdrop-filter: blur(18px);
   }
+
+  .home-surface,
+  .chat-surface,
+  .research-surface {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .home-surface::before,
+  .home-surface::after,
+  .chat-surface::before,
+  .chat-surface::after,
+  .research-surface::before,
+  .research-surface::after {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: -1;
+    filter: blur(40px);
+    opacity: 0.65;
+  }
+
+  .home-surface::before,
+  .chat-surface::before,
+  .research-surface::before {
+    width: 20rem;
+    height: 20rem;
+    top: -5rem;
+    right: -4rem;
+    background: color-mix(in oklch, var(--primary) 24%, transparent);
+  }
+
+  .home-surface::after,
+  .chat-surface::after,
+  .research-surface::after {
+    width: 16rem;
+    height: 16rem;
+    bottom: -4rem;
+    left: -3rem;
+    background: color-mix(in oklch, var(--accent) 30%, transparent);
+  }
+
+  .glass-panel {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklch, var(--card) 88%, transparent),
+        color-mix(in oklch, var(--card) 72%, transparent)
+      );
+    border: 1px solid color-mix(in oklch, var(--border) 88%, transparent);
+    backdrop-filter: blur(18px);
+    box-shadow:
+      0 24px 56px -30px color-mix(in oklch, var(--foreground) 55%, transparent),
+      0 1px 0 color-mix(in oklch, var(--foreground) 7%, transparent) inset;
+  }
+
+  .tilt-card {
+    transform: perspective(1500px) rotateX(5deg) rotateY(-8deg) translateZ(0);
+    transform-style: preserve-3d;
+    transition: transform 300ms ease;
+  }
+
+  .parallax-card {
+    will-change: transform;
+    transition: transform 160ms ease-out;
+  }
+
+  @keyframes floatSoft {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  .float-soft {
+    animation: floatSoft 6s ease-in-out infinite;
+  }
+
+  @keyframes riseIn {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .rise-in {
+    animation: riseIn 460ms ease both;
+  }
+
+  .rise-in-delay-1 {
+    animation-delay: 80ms;
+  }
+
+  .rise-in-delay-2 {
+    animation-delay: 140ms;
+  }
+
+  .rise-in-delay-3 {
+    animation-delay: 200ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .float-soft,
+    .rise-in,
+    .rise-in-delay-1,
+    .rise-in-delay-2,
+    .rise-in-delay-3 {
+      animation: none;
+    }
+
+    .tilt-card,
+    .parallax-card {
+      transition: none;
+      transform: none;
+    }
+  }
 }
