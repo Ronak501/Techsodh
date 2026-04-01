@@ -44,12 +44,15 @@ const defaultPreferences: ResearchPreferences = {
   model_name: "gemini-default",
 }
 
-const RETRY_ATTEMPTS = 3
+const RETRY_ATTEMPTS = 5
+const BASE_RETRY_DELAY_MS = 600
+const MAX_RETRY_DELAY_MS = 12_000
 
 type GeminiResult = {
   text: string
   promptTokens: number
   completionTokens: number
+  finishReason?: string
 }
 
 export function buildCacheKey(query: string) {
@@ -97,18 +100,32 @@ export function resolveTemplate(
 }
 
 function extractJSON<T>(text: string): T {
-  const trimmed = text.trim()
+  const trimmed = text.trim().replace(/^\uFEFF/, "")
+
+  // Check for empty or error responses
+  if (!trimmed || trimmed.toLowerCase().includes("error") && !trimmed.startsWith("{")) {
+    throw new Error(`Invalid response: ${trimmed.substring(0, 100)}`)
+  }
 
   // Fast path when the whole response is already valid JSON.
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     try {
       return JSON.parse(trimmed) as T
-    } catch {
-      // Continue with fallback extraction strategies.
+    } catch (e) {
+      // Try to find balanced JSON within the text
+      const candidate = findBalancedJsonCandidate(trimmed)
+      if (candidate) {
+        try {
+          return JSON.parse(candidate) as T
+        } catch {
+          throw new Error(`Malformed JSON: ${e instanceof Error ? e.message : "Parse error"}`)
+        }
+      }
+      throw new Error(`Invalid JSON at start: ${e instanceof Error ? e.message : "Parse error"}`)
     }
   }
 
-  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  const fencedMatch = trimmed.match(/```(?:json|jsonc|javascript|js)?\s*([\s\S]*?)\s*```/i)
   if (fencedMatch?.[1]) {
     try {
       return JSON.parse(fencedMatch[1]) as T
@@ -117,12 +134,30 @@ function extractJSON<T>(text: string): T {
     }
   }
 
-  const candidate = findBalancedJsonCandidate(trimmed)
-  if (!candidate) {
-    throw new Error("No JSON found in Gemini response")
+  const labeledJsonMatch = trimmed.match(
+    /(?:^|\n)\s*json\s*[:\-]?\s*([\[{][\s\S]*)$/i
+  )
+  if (labeledJsonMatch?.[1]) {
+    const labeledCandidate = findBalancedJsonCandidate(labeledJsonMatch[1])
+    if (labeledCandidate) {
+      try {
+        return JSON.parse(labeledCandidate) as T
+      } catch {
+        // Continue with generic extraction.
+      }
+    }
   }
 
-  return JSON.parse(candidate) as T
+  const candidate = findBalancedJsonCandidate(trimmed)
+  if (!candidate) {
+    throw new Error(`No JSON found in response. First 200 chars: ${trimmed.substring(0, 200)}`)
+  }
+
+  try {
+    return JSON.parse(candidate) as T
+  } catch (e) {
+    throw new Error(`Failed to parse extracted JSON: ${e instanceof Error ? e.message : "Parse error"}`)
+  }
 }
 
 function findBalancedJsonCandidate(input: string): string | null {
@@ -192,20 +227,24 @@ async function callGeminiForJson<T>(
   settings: ResearchSettings,
   phase: string
 ): Promise<{ parsed: T; promptTokens: number; completionTokens: number }> {
-  const attempts = 2
+  const attempts = 3
   let totalPromptTokens = 0
   let totalCompletionTokens = 0
   let lastError: Error | null = null
+  let lastResponse = ""
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     const strictPrompt =
       attempt === 1
         ? prompt
-        : `${prompt}\n\nIMPORTANT: Return valid JSON only. Do not include markdown fences, explanations, or extra prose.`
+        : `${prompt}\n\nIMPORTANT: Return valid RFC8259 JSON only. Do not include markdown fences, code blocks, comments, explanations, or extra prose before/after JSON.`
 
-    const result = await callGemini(strictPrompt, settings)
+    const result = await callGemini(strictPrompt, settings, {
+      expectJson: true,
+    })
     totalPromptTokens += result.promptTokens
     totalCompletionTokens += result.completionTokens
+    lastResponse = result.text
 
     try {
       return {
@@ -219,10 +258,33 @@ async function callGeminiForJson<T>(
           ? error
           : new Error(`Failed to parse ${phase} JSON response`)
 
+      // If the generation is truncated or malformed, ask the model to repair only the JSON.
+      try {
+        const repaired = await repairGeminiJson<T>(result.text, settings)
+        totalPromptTokens += repaired.promptTokens
+        totalCompletionTokens += repaired.completionTokens
+
+        return {
+          parsed: repaired.parsed,
+          promptTokens: totalPromptTokens,
+          completionTokens: totalCompletionTokens,
+        }
+      } catch (repairError) {
+        const repairMessage =
+          repairError instanceof Error
+            ? repairError.message
+            : "JSON repair attempt failed"
+        lastError = new Error(`${lastError.message}; ${repairMessage}`)
+      }
+      
+      const responsePreview = result.text.substring(0, 300)
       if (attempt < attempts) {
         console.warn(`Failed to parse ${phase} JSON response; retrying`, {
           attempt,
           reason: lastError.message,
+          responsePreview,
+          responseLength: result.text.length,
+          finishReason: result.finishReason || "unknown",
         })
       }
     }
@@ -231,14 +293,67 @@ async function callGeminiForJson<T>(
   throw new Error(
     `Model returned non-JSON ${phase} response after ${attempts} attempts${
       lastError?.message ? `: ${lastError.message}` : ""
-    }`
+    }\nResponse preview: ${lastResponse.substring(0, 500)}${lastResponse.length > 500 ? "..." : ""}`
   )
+}
+
+async function repairGeminiJson<T>(
+  brokenJson: string,
+  settings: ResearchSettings
+): Promise<{ parsed: T; promptTokens: number; completionTokens: number }> {
+  const repairPrompt = `
+You are a strict JSON repair assistant.
+Task: return a corrected RFC8259-valid JSON document from the broken input below.
+Rules:
+- Return JSON only.
+- Keep the same top-level structure and keys.
+- Do not add markdown/code fences/comments/explanations.
+- If content is truncated, complete the JSON with reasonable placeholders while preserving schema.
+Broken JSON:
+${brokenJson}
+`
+
+  const repaired = await callGemini(repairPrompt, settings, { expectJson: true })
+
+  return {
+    parsed: extractJSON<T>(repaired.text),
+    promptTokens: repaired.promptTokens,
+    completionTokens: repaired.completionTokens,
+  }
+}
+
+function parseRetryAfterMs(value: string | null): number | null {
+  if (!value) return null
+
+  const asSeconds = Number(value)
+  if (Number.isFinite(asSeconds) && asSeconds >= 0) {
+    return asSeconds * 1000
+  }
+
+  const asDate = Date.parse(value)
+  if (Number.isNaN(asDate)) return null
+
+  const delta = asDate - Date.now()
+  return delta > 0 ? delta : 0
+}
+
+function computeRetryDelayMs(attempt: number, retryAfterMs?: number | null) {
+  if (typeof retryAfterMs === "number" && retryAfterMs >= 0) {
+    return Math.min(retryAfterMs, MAX_RETRY_DELAY_MS)
+  }
+
+  const exponential = BASE_RETRY_DELAY_MS * 2 ** (attempt - 1)
+  const jitter = Math.floor(Math.random() * 250)
+  return Math.min(exponential + jitter, MAX_RETRY_DELAY_MS)
 }
 
 async function callGeminiWithRetry(
   prompt: string,
   settings: ResearchSettings,
-  endpoint: string
+  endpoint: string,
+  options?: {
+    expectJson?: boolean
+  }
 ): Promise<GeminiResult> {
   const temperature =
     settings.output_style === "concise"
@@ -260,30 +375,69 @@ async function callGeminiWithRetry(
           generationConfig: {
             temperature,
             maxOutputTokens,
+            ...(options?.expectJson ? { responseMimeType: "application/json" } : {}),
           },
         }),
       })
 
       if (!res.ok) {
-        throw new Error(`Gemini request failed (${res.status})`)
+        const retryAfterMs = parseRetryAfterMs(res.headers.get("retry-after"))
+        const responseText = await res.text().catch(() => "")
+        const detail = responseText
+          ? `: ${responseText.substring(0, 400)}`
+          : ""
+        const error = new Error(
+          `Gemini request failed (${res.status})${detail}`
+        )
+
+        if (attempt < RETRY_ATTEMPTS) {
+          const delayMs = computeRetryDelayMs(attempt, retryAfterMs)
+          await new Promise((resolve) => setTimeout(resolve, delayMs))
+          continue
+        }
+
+        throw error
       }
 
       const data = await res.json()
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+      
+      // Check for API errors in response
+      if (data.error) {
+        throw new Error(`Gemini API error: ${data.error.message || JSON.stringify(data.error)}`)
+      }
+      
+      const parts = data.candidates?.[0]?.content?.parts
+      const text = Array.isArray(parts)
+        ? parts
+            .map((part: { text?: string }) => part?.text || "")
+            .join("\n")
+            .trim()
+        : ""
 
       if (!text) {
-        throw new Error("Invalid Gemini response")
+        const reason = data.candidates?.[0]?.finishReason || "unknown"
+        throw new Error(
+          `Empty Gemini response (finish reason: ${reason}). ${
+            data.candidates?.[0]?.safetyRatings?.length 
+              ? `Safety ratings: ${JSON.stringify(data.candidates[0].safetyRatings)}` 
+              : ""
+          }`
+        )
       }
 
       return {
         text,
         promptTokens: Number(data.usageMetadata?.promptTokenCount || 0),
         completionTokens: Number(data.usageMetadata?.candidatesTokenCount || 0),
+        finishReason: data.candidates?.[0]?.finishReason,
       }
     } catch (error) {
       lastError = error instanceof Error ? error : new Error("Model request failed")
-      const delayMs = 300 * attempt
-      await new Promise((resolve) => setTimeout(resolve, delayMs))
+
+      if (attempt < RETRY_ATTEMPTS) {
+        const delayMs = computeRetryDelayMs(attempt)
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      }
     }
   }
 
@@ -292,10 +446,13 @@ async function callGeminiWithRetry(
 
 async function callGemini(
   prompt: string,
-  settings: ResearchSettings
+  settings: ResearchSettings,
+  options?: {
+    expectJson?: boolean
+  }
 ): Promise<GeminiResult> {
   try {
-    return await callGeminiWithRetry(prompt, settings, GEMINI_API)
+    return await callGeminiWithRetry(prompt, settings, GEMINI_API, options)
   } catch (primaryError) {
     if (!GEMINI_FALLBACK_API) {
       throw primaryError
@@ -305,7 +462,12 @@ async function callGemini(
       reason: primaryError instanceof Error ? primaryError.message : "unknown",
     })
 
-    return await callGeminiWithRetry(prompt, settings, GEMINI_FALLBACK_API)
+    return await callGeminiWithRetry(
+      prompt,
+      settings,
+      GEMINI_FALLBACK_API,
+      options
+    )
   }
 }
 

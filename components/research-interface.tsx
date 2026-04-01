@@ -225,192 +225,223 @@ export function ResearchInterface({ setSummaryData }: Props) {
   };
 
   return (
-    <div className="space-y-8">
-      <Card className="p-8 border-border/50 bg-card/50">
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-3">
-              Research Mode
-            </label>
-            <div className="grid sm:grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant={mode === "topic" ? "default" : "outline"}
-                onClick={() => {
-                  setMode("topic");
-                  if (template === "claim_verification") {
-                    setTemplate("literature_review");
-                  }
-                }}
-              >
-                Topic Research
-              </Button>
-              <Button
-                type="button"
-                variant={mode === "claim" ? "default" : "outline"}
-                onClick={() => {
-                  setMode("claim");
-                  setTemplate("claim_verification");
-                }}
-              >
-                Claim Verification
-              </Button>
-            </div>
-          </div>
+    <div className="space-y-10">
+      <Card className="overflow-hidden border-border/70 bg-card/70 shadow-sm backdrop-blur">
+        <div className="border-b border-border/60 bg-muted/25 px-5 py-5 sm:px-8 sm:py-6">
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            Research Workspace
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">
+            Compose Your Research Request
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Select the method, tune output preferences, and generate a
+            structured report.
+          </p>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-3">Template</label>
-            <select
-              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-              value={template}
-              onChange={(e) => setTemplate(e.target.value as ResearchTemplate)}
-            >
-              <option value="literature_review">Literature Review</option>
-              <option value="technical_report">Technical Report</option>
-              <option value="claim_verification">Claim Verification</option>
-            </select>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-3">
+        <div className="p-5 sm:p-8">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Output Style
+              <label className="block text-sm font-medium mb-3">
+                Research Mode
               </label>
-              <select
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                value={preferences.output_style}
-                onChange={(e) =>
-                  setPreferences((prev) => ({
-                    ...prev,
-                    output_style: e.target
-                      .value as ResearchPreferences["output_style"],
-                  }))
-                }
-                disabled={preferencesLoading}
-              >
-                <option value="balanced">Balanced</option>
-                <option value="concise">Concise</option>
-                <option value="detailed">Detailed</option>
-              </select>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  variant={mode === "topic" ? "default" : "outline"}
+                  onClick={() => {
+                    setMode("topic");
+                    if (template === "claim_verification") {
+                      setTemplate("literature_review");
+                    }
+                  }}
+                >
+                  Topic Research
+                </Button>
+                <Button
+                  type="button"
+                  variant={mode === "claim" ? "default" : "outline"}
+                  onClick={() => {
+                    setMode("claim");
+                    setTemplate("claim_verification");
+                  }}
+                >
+                  Claim Verification
+                </Button>
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Depth</label>
+              <label className="block text-sm font-medium mb-3">Template</label>
               <select
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                value={preferences.depth}
+                className="h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm"
+                value={template}
                 onChange={(e) =>
-                  setPreferences((prev) => ({
-                    ...prev,
-                    depth: e.target.value as ResearchPreferences["depth"],
-                  }))
+                  setTemplate(e.target.value as ResearchTemplate)
                 }
-                disabled={preferencesLoading}
               >
-                <option value="standard">Standard</option>
-                <option value="deep">Deep</option>
+                <option value="literature_review">Literature Review</option>
+                <option value="technical_report">Technical Report</option>
+                <option value="claim_verification">Claim Verification</option>
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Model</label>
-              <Input
-                value={preferences.model_name}
-                onChange={(e) =>
-                  setPreferences((prev) => ({
-                    ...prev,
-                    model_name: e.target.value,
-                  }))
-                }
-                disabled={preferencesLoading}
-              />
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Output Style
+                </label>
+                <select
+                  className="h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm"
+                  value={preferences.output_style}
+                  onChange={(e) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      output_style: e.target
+                        .value as ResearchPreferences["output_style"],
+                    }))
+                  }
+                  disabled={preferencesLoading}
+                >
+                  <option value="balanced">Balanced</option>
+                  <option value="concise">Concise</option>
+                  <option value="detailed">Detailed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Depth</label>
+                <select
+                  className="h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm"
+                  value={preferences.depth}
+                  onChange={(e) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      depth: e.target.value as ResearchPreferences["depth"],
+                    }))
+                  }
+                  disabled={preferencesLoading}
+                >
+                  <option value="standard">Standard</option>
+                  <option value="deep">Deep</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Model</label>
+                <Input
+                  value={preferences.model_name}
+                  onChange={(e) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      model_name: e.target.value,
+                    }))
+                  }
+                  disabled={preferencesLoading}
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={savePreferences}
-              disabled={preferencesLoading || savingPreferences}
-            >
-              {savingPreferences ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
-              Save Preferences
-            </Button>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-3">
-              {mode === "claim" ? "Claim" : "Research Query"}
-            </label>
-            <div className="flex gap-2">
-              <Input
-                placeholder={
-                  mode === "claim"
-                    ? "Enter a claim to verify..."
-                    : "Enter your research query..."
-                }
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="flex-1 bg-input border-border/50"
-              />
+            <div className="flex justify-end">
               <Button
-                onClick={handleSearch}
-                disabled={!query.trim() || isSearching}
-                className="bg-primary hover:bg-primary/90"
+                type="button"
+                variant="outline"
+                onClick={savePreferences}
+                disabled={preferencesLoading || savingPreferences}
               >
-                {isSearching ? (
+                {savingPreferences ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Search className="w-4 h-4" />
+                  <Save className="w-4 h-4 mr-2" />
                 )}
+                Save Preferences
               </Button>
             </div>
-          </div>
 
-          <div className="border-t border-border/50 pt-6">
-            <label className="block text-sm font-medium mb-3">
-              Upload Document (Optional)
-            </label>
-            <div className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center hover:border-accent/50 transition">
-              <input
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
-                accept=".pdf,.txt,.docx"
-              />
-              <label
-                htmlFor="file-upload"
-                className="cursor-pointer flex flex-col items-center gap-2"
-              >
-                <Upload className="w-8 h-8 text-muted-foreground" />
-                <span className="text-sm font-medium">
-                  {uploadedFile
-                    ? uploadedFile.name
-                    : "Click to upload or drag and drop"}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  PDF, TXT, or DOCX
-                </span>
+            <div>
+              <label className="block text-sm font-medium mb-3">
+                {mode === "claim" ? "Claim" : "Research Query"}
               </label>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Be specific about scope, timeline, and expected output quality
+                for better results.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  placeholder={
+                    mode === "claim"
+                      ? "Enter a claim to verify..."
+                      : "Enter your research query..."
+                  }
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  className="h-11 flex-1 bg-input border-border/60"
+                />
+                <Button
+                  onClick={handleSearch}
+                  disabled={!query.trim() || isSearching}
+                  className="h-11 w-full bg-primary hover:bg-primary/90 sm:w-auto sm:min-w-11"
+                >
+                  {isSearching ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="border-t border-border/50 pt-6">
+              <label className="block text-sm font-medium mb-3">
+                Upload Document (Optional)
+              </label>
+              <div className="rounded-lg border-2 border-dashed border-border/50 p-5 text-center transition hover:border-accent/50 sm:p-6">
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                  accept=".pdf,.txt,.docx"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="flex cursor-pointer flex-col items-center gap-2"
+                >
+                  <Upload className="w-8 h-8 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {uploadedFile
+                      ? uploadedFile.name
+                      : "Click to upload or drag and drop"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    PDF, TXT, or DOCX
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
       </Card>
 
       {isSearching && streamProgress.length > 0 ? (
-        <Card className="p-4 border-border/50 bg-card/50">
-          <h4 className="font-semibold mb-2">Live Progress</h4>
-          <ul className="space-y-1 text-sm text-muted-foreground">
+        <Card className="border-border/70 bg-card/70 p-5">
+          <h4 className="font-semibold">Live Progress</h4>
+          <p className="mt-1 text-xs text-muted-foreground">
+            The report is generated in multiple stages and will appear as soon
+            as processing completes.
+          </p>
+          <ul className="mt-4 max-h-52 space-y-2 overflow-auto pr-1 text-sm text-muted-foreground">
             {streamProgress.map((item, index) => (
-              <li key={`${item.step}-${index}`}>
-                {item.step}: {item.detail}
+              <li
+                key={`${item.step}-${index}`}
+                className="report-copy rounded-lg border border-border/60 bg-muted/25 px-3 py-2"
+              >
+                <span className="font-medium text-foreground/90">
+                  {item.step}
+                </span>
+                : {item.detail}
               </li>
             ))}
           </ul>
@@ -418,7 +449,7 @@ export function ResearchInterface({ setSummaryData }: Props) {
       ) : null}
 
       {apiError ? (
-        <Card className="p-4 border-destructive/40 bg-destructive/10">
+        <Card className="border-destructive/40 bg-destructive/10 p-4">
           <p className="text-sm text-destructive">{apiError}</p>
           {upgradeUrl ? (
             <Button asChild size="sm" className="mt-3">
@@ -430,7 +461,7 @@ export function ResearchInterface({ setSummaryData }: Props) {
 
       {hasSearched && (
         <div className="space-y-4">
-          <h3 className="font-semibold text-lg flex items-center gap-2">
+          <h3 className="flex items-center gap-2 text-lg font-semibold">
             {!isSearching && results.length > 0 && (
               <CheckCircle className="w-5 h-5 text-accent" />
             )}
@@ -438,9 +469,9 @@ export function ResearchInterface({ setSummaryData }: Props) {
           </h3>
 
           {isSearching ? (
-            <Card className="p-12 border-border/50 bg-card/50 flex items-center justify-center gap-3">
+            <Card className="flex items-center justify-center gap-3 border-border/70 bg-card/70 p-12">
               <Loader2 className="w-5 h-5 animate-spin text-accent" />
-              <span className="text-muted-foreground">
+              <span className="report-copy text-muted-foreground">
                 Running multi-step research pipeline...
               </span>
             </Card>
@@ -449,19 +480,21 @@ export function ResearchInterface({ setSummaryData }: Props) {
               {results.map((result) => (
                 <Card
                   key={result.id}
-                  className="p-6 border-border/50 bg-card/50 hover:bg-card/80 transition"
+                  className="border-border/70 bg-card/70 p-6 transition hover:bg-card"
                 >
                   <div className="space-y-3">
                     <div>
-                      <h4 className="font-semibold text-base">
+                      <h4 className="text-balance text-base font-semibold">
                         {result.title}
                       </h4>
                       <p className="text-sm text-muted-foreground">
                         {result.authors}
                       </p>
                     </div>
-                    <p className="text-sm">{result.abstract}</p>
-                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                    <p className="report-copy max-h-24 overflow-auto pr-1 text-sm text-foreground/90">
+                      {result.abstract}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
                       <div className="flex gap-6 text-xs text-muted-foreground">
                         <span>{result.citations} citations</span>
                         <span>

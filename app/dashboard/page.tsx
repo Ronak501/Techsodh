@@ -1,13 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Calendar, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  BarChart3,
+  Bot,
+  Calendar,
+  CircleCheckBig,
+  FileText,
+  Sparkles,
+  Workflow,
+} from "lucide-react";
 
 type ResearchJob = {
   id: string;
@@ -20,8 +30,29 @@ type ResearchJob = {
   created_at: string;
 };
 
+const statusMeta = {
+  completed: {
+    label: "Completed",
+    badgeClass:
+      "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+    icon: CircleCheckBig,
+  },
+  in_progress: {
+    label: "In Progress",
+    badgeClass:
+      "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30",
+    icon: Workflow,
+  },
+  failed: {
+    label: "Failed",
+    badgeClass:
+      "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30",
+    icon: Bot,
+  },
+} as const;
+
 export default function DashboardPage() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   const [userName, setUserName] = useState<string | null>(null);
   const [jobs, setJobs] = useState<ResearchJob[]>([]);
@@ -40,7 +71,10 @@ export default function DashboardPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       setUserName(user.user_metadata?.full_name || user.email || "User");
 
@@ -59,24 +93,23 @@ export default function DashboardPage() {
     };
 
     loadData();
-  }, []);
+  }, [supabase]);
 
-  // Stats
   const total = jobs.length;
-  const completed = jobs.filter((j) => j.status === "completed").length;
-  const inProgress = jobs.filter((j) => j.status === "in_progress").length;
-  const failed = jobs.filter((j) => j.status === "failed").length;
+  const completed = jobs.filter((job) => job.status === "completed").length;
+  const inProgress = jobs.filter((job) => job.status === "in_progress").length;
+  const failed = jobs.filter((job) => job.status === "failed").length;
   const successRate = total > 0 ? Math.round((completed / total) * 100) : 0;
   const totalPromptTokens = jobs.reduce(
-    (sum, j) => sum + (j.prompt_tokens || 0),
+    (sum, job) => sum + (job.prompt_tokens || 0),
     0,
   );
   const totalCompletionTokens = jobs.reduce(
-    (sum, j) => sum + (j.completion_tokens || 0),
+    (sum, job) => sum + (job.completion_tokens || 0),
     0,
   );
   const estimatedCostUsd = jobs.reduce(
-    (sum, j) => sum + Number(j.estimated_cost_usd || 0),
+    (sum, job) => sum + Number(job.estimated_cost_usd || 0),
     0,
   );
 
@@ -116,215 +149,480 @@ export default function DashboardPage() {
       label: key,
       success: dayJobs.filter((job) => job.status === "completed").length,
       failed: dayJobs.filter((job) => job.status === "failed").length,
+      total: dayJobs.length,
     };
   });
 
+  const maxTrendCount = Math.max(
+    1,
+    ...recentTrend.map((day) => day.success + day.failed),
+  );
+
+  const metricCards = [
+    {
+      label: "Total Research",
+      value: total,
+      icon: BarChart3,
+      accent: "from-primary/25 to-primary/5",
+      valueClass: "text-primary",
+    },
+    {
+      label: "Completed",
+      value: completed,
+      icon: CircleCheckBig,
+      accent: "from-emerald-500/25 to-emerald-500/5",
+      valueClass: "text-emerald-600 dark:text-emerald-300",
+    },
+    {
+      label: "In Progress",
+      value: inProgress,
+      icon: Workflow,
+      accent: "from-sky-500/25 to-sky-500/5",
+      valueClass: "text-sky-600 dark:text-sky-300",
+    },
+    {
+      label: "Failed",
+      value: failed,
+      icon: Bot,
+      accent: "from-rose-500/25 to-rose-500/5",
+      valueClass: "text-rose-600 dark:text-rose-300",
+    },
+    {
+      label: "Success Rate",
+      value: `${successRate}%`,
+      icon: Sparkles,
+      accent: "from-violet-500/25 to-violet-500/5",
+      valueClass: "text-violet-600 dark:text-violet-300",
+    },
+    {
+      label: "Est. Cost",
+      value: `$${estimatedCostUsd.toFixed(2)}`,
+      icon: ArrowUpRight,
+      accent: "from-amber-500/25 to-amber-500/5",
+      valueClass: "text-amber-600 dark:text-amber-300",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border/50 bg-card/50">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/" className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">
-                Your research history and results
-              </p>
+    <div className="dashboard-surface min-h-screen bg-background">
+      <div className="border-b border-border/60 bg-linear-to-r from-card via-card/92 to-muted/50">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <Button asChild variant="ghost" size="sm" className="w-fit">
+                <Link href="/" className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Link>
+              </Button>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Research Command Center
+                </p>
+                <h1 className="text-3xl font-bold tracking-tight text-balance">
+                  Dashboard
+                </h1>
+                <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+                  Track every research run, review outcomes, and launch new
+                  analyses from one premium workspace.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              👤 {userName ? `Hi, ${userName}` : "Loading..."}
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant="secondary" className="px-3 py-1">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                AI Research OS
+              </Badge>
+              <div className="rounded-full border border-border/60 bg-card/80 px-4 py-2 text-sm text-muted-foreground shadow-sm backdrop-blur">
+                <span className="font-medium text-foreground/90">Hello</span>{" "}
+                {userName ? userName : "Loading your workspace..."}
+              </div>
+              <Button asChild size="sm" className="shadow-md shadow-primary/20">
+                <Link href="/research/new" className="gap-2">
+                  New Research
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/chat">Conversations</Link>
+              </Button>
             </div>
-
-            <Button asChild size="sm">
-              <Link href="/research/new">New Research</Link>
-            </Button>
-
-            <Button asChild size="sm">
-              <Link href="/chat">Conversations</Link>
-            </Button>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-12 space-y-6">
-        {/* Stats */}
-        <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground mb-2">Total Research</p>
-            <p className="text-3xl font-bold text-accent">{total}</p>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <section className="grid gap-6 lg:grid-cols-[1.4fr_.9fr]">
+          <Card className="dashboard-card dashboard-glass rounded-3xl border-border/70 p-6 sm:p-8 lg:p-10">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="bg-primary/15 text-primary border-primary/30">
+                <Workflow className="mr-2 h-3.5 w-3.5" />
+                Product showcase
+              </Badge>
+              <Badge variant="secondary">Research hub</Badge>
+            </div>
+            <div className="mt-5 space-y-4">
+              <h2 className="max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+                A 3D command center for your team’s research software.
+              </h2>
+              <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                Use the platform to generate reports, verify claims, export
+                polished outputs, and manage the full research workflow from one
+                place.
+              </p>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild className="shadow-lg shadow-primary/20">
+                <Link href="/research/new" className="gap-2">
+                  Start New Research
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/research">Open Research Workspace</Link>
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href="/chat">Open Chat Assist</Link>
+              </Button>
+            </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <Bot className="h-4 w-4 text-primary" />
+                  AI workflow
+                </div>
+                <p className="mt-3 text-sm text-foreground/90">
+                  Research, verify, and export with a guided pipeline.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Reports
+                </div>
+                <p className="mt-3 text-sm text-foreground/90">
+                  Clean summaries with references, evidence, and confidence.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Product value
+                </div>
+                <p className="mt-3 text-sm text-foreground/90">
+                  Built to make the software itself feel premium and fast.
+                </p>
+              </div>
+            </div>
           </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground mb-2">Completed</p>
-            <p className="text-3xl font-bold text-accent">{completed}</p>
+
+          <Card className="dashboard-card dashboard-card-tilt dashboard-glass rounded-3xl border-border/70 p-6 sm:p-8">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Live workspace
+                </p>
+                <h3 className="mt-2 text-xl font-semibold">Platform status</h3>
+              </div>
+              <div className="rounded-full bg-primary/15 px-3 py-1 text-xs font-medium text-primary">
+                Ready to run
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Active research jobs
+                  </span>
+                  <span className="font-semibold">{total}</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full w-[78%] rounded-full bg-linear-to-r from-primary to-accent" />
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Tokens processed
+                  </p>
+                  <p className="mt-3 text-2xl font-semibold text-primary">
+                    {(
+                      totalPromptTokens + totalCompletionTokens
+                    ).toLocaleString()}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Output quality
+                  </p>
+                  <p className="mt-3 text-2xl font-semibold text-foreground">
+                    {successRate}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Recent output trend</p>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="mt-4 space-y-3">
+                  {recentTrend.map((day) => {
+                    const count = day.success + day.failed;
+                    const width = (count / maxTrendCount) * 100;
+
+                    return (
+                      <div key={day.label} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{day.label}</span>
+                          <span>
+                            {count} run{count === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-linear-to-r from-primary via-sky-500 to-emerald-500"
+                            style={{ width: `${Math.max(8, width)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground mb-2">In Progress</p>
-            <p className="text-3xl font-bold text-accent">{inProgress}</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground mb-2">Failed</p>
-            <p className="text-3xl font-bold text-destructive">{failed}</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground mb-2">Success Rate</p>
-            <p className="text-3xl font-bold text-accent">{successRate}%</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground mb-2">Est. Cost</p>
-            <p className="text-3xl font-bold text-accent">
-              ${estimatedCostUsd.toFixed(2)}
+        </section>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {metricCards.map((metric) => {
+            const Icon = metric.icon;
+
+            return (
+              <Card
+                key={metric.label}
+                className="dashboard-card rounded-3xl border-border/70 bg-card/80 p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div
+                  className={`rounded-2xl bg-linear-to-br ${metric.accent} p-3`}
+                >
+                  <Icon className={`h-5 w-5 ${metric.valueClass}`} />
+                </div>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {metric.label}
+                </p>
+                <p
+                  className={`mt-2 text-3xl font-bold tracking-tight ${metric.valueClass}`}
+                >
+                  {metric.value}
+                </p>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[.95fr_1.05fr]">
+          <Card className="dashboard-card rounded-3xl border-border/70 bg-card/80 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">Usage Overview</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This is the operational layer behind your research software.
             </p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Query Count
+                </p>
+                <p className="mt-2 text-2xl font-semibold">{total}</p>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Prompt Tokens
+                </p>
+                <p className="mt-2 text-2xl font-semibold">
+                  {totalPromptTokens.toLocaleString()}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Completion Tokens
+                </p>
+                <p className="mt-2 text-2xl font-semibold">
+                  {totalCompletionTokens.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="dashboard-card rounded-3xl border-border/70 bg-card/80 p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  Success / Failure Trend
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Last 7 days of research output.
+                </p>
+              </div>
+              <Calendar className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="mt-5 space-y-4">
+              {recentTrend.map((row) => {
+                const totalRow = Math.max(1, row.success + row.failed);
+
+                return (
+                  <div
+                    key={row.label}
+                    className="rounded-2xl border border-border/60 bg-muted/25 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className="text-muted-foreground">{row.label}</span>
+                      <div className="flex gap-4">
+                        <span className="text-emerald-600 dark:text-emerald-300">
+                          Success {row.success}
+                        </span>
+                        <span className="text-rose-600 dark:text-rose-300">
+                          Failed {row.failed}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-emerald-500/80"
+                        style={{ width: `${(row.success / totalRow) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </Card>
         </div>
 
-        <Card className="p-6">
-          <h2 className="font-semibold text-lg mb-3">Usage Overview</h2>
-          <div className="grid sm:grid-cols-3 gap-4 text-sm">
-            <p>
-              <span className="font-semibold">Query Count:</span> {total}
-            </p>
-            <p>
-              <span className="font-semibold">Prompt Tokens:</span>{" "}
-              {totalPromptTokens.toLocaleString()}
-            </p>
-            <p>
-              <span className="font-semibold">Completion Tokens:</span>{" "}
-              {totalCompletionTokens.toLocaleString()}
-            </p>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h2 className="font-semibold text-lg mb-3">
-            Success/Failure Trend (Last 7 Days)
-          </h2>
-          <div className="space-y-2 text-sm">
-            {recentTrend.map((row) => (
-              <div
-                key={row.label}
-                className="flex items-center justify-between border-b border-border/50 pb-2"
-              >
-                <span className="text-muted-foreground">{row.label}</span>
-                <span>Success: {row.success}</span>
-                <span>Failed: {row.failed}</span>
+        <Card className="dashboard-card mt-6 overflow-hidden rounded-3xl border-border/70 bg-card/80 shadow-sm">
+          <div className="border-b border-border/60 bg-muted/30 p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Recent Research</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Search, sort, and export your research history.
+                </p>
               </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Research List */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b">
-            <h2 className="font-semibold text-lg">Recent Research</h2>
-            <div className="mt-4 grid sm:grid-cols-3 gap-3">
-              <Input
-                placeholder="Search by query"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <select
-                className="h-10 rounded-md border bg-background px-3 text-sm"
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(
-                    e.target.value as
-                      | "all"
-                      | "completed"
-                      | "in_progress"
-                      | "failed",
-                  )
-                }
-              >
-                <option value="all">All statuses</option>
-                <option value="completed">Completed</option>
-                <option value="in_progress">In progress</option>
-                <option value="failed">Failed</option>
-              </select>
-              <select
-                className="h-10 rounded-md border bg-background px-3 text-sm"
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value as "newest" | "oldest" | "query_asc")
-                }
-              >
-                <option value="newest">Sort: Newest first</option>
-                <option value="oldest">Sort: Oldest first</option>
-                <option value="query_asc">Sort: Query A-Z</option>
-              </select>
+              <div className="grid gap-2 sm:grid-cols-3 lg:w-136">
+                <Input
+                  placeholder="Search by query"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-11"
+                />
+                <select
+                  className="h-11 rounded-lg border border-border/70 bg-background px-3 text-sm"
+                  value={statusFilter}
+                  onChange={(e) =>
+                    setStatusFilter(
+                      e.target.value as
+                        | "all"
+                        | "completed"
+                        | "in_progress"
+                        | "failed",
+                    )
+                  }
+                >
+                  <option value="all">All statuses</option>
+                  <option value="completed">Completed</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="failed">Failed</option>
+                </select>
+                <select
+                  className="h-11 rounded-lg border border-border/70 bg-background px-3 text-sm"
+                  value={sortBy}
+                  onChange={(e) =>
+                    setSortBy(
+                      e.target.value as "newest" | "oldest" | "query_asc",
+                    )
+                  }
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="query_asc">Query A-Z</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {loading ? (
-            <div className="p-6">Loading...</div>
-          ) : filteredJobs.length === 0 ? (
-            <div className="p-6 text-muted-foreground">
-              No research yet. Start one 🚀
+            <div className="p-6 text-sm text-muted-foreground">Loading...</div>
+          ) : sortedJobs.length === 0 ? (
+            <div className="p-6 text-sm text-muted-foreground">
+              {search || statusFilter !== "all"
+                ? "No matching research found. Adjust filters or start a new analysis."
+                : "No research yet. Start one to populate your dashboard."}
             </div>
           ) : (
-            <div className="divide-y">
-              {sortedJobs.map((job) => (
-                <div key={job.id} className="p-6 hover:bg-muted/30 transition">
-                  <div className="flex justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold mb-1">{job.query}</h3>
-                      <div className="flex gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {new Date(job.created_at).toLocaleDateString()}
+            <div className="divide-y divide-border/60">
+              {sortedJobs.map((job) => {
+                const meta = statusMeta[job.status];
+                const StatusIcon = meta.icon;
+
+                return (
+                  <div
+                    key={job.id}
+                    className="group p-5 transition hover:bg-muted/25 sm:p-6"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className={meta.badgeClass}>
+                            <StatusIcon className="mr-2 h-3.5 w-3.5" />
+                            {meta.label}
+                          </Badge>
+                          <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                            Research report
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <FileText className="w-4 h-4" />
-                          {job.source_count} insights
+
+                        <div className="max-w-3xl">
+                          <h3 className="text-base font-semibold leading-7 text-balance sm:text-lg">
+                            {job.query}
+                          </h3>
+                          <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="h-4 w-4" />
+                              {new Date(job.created_at).toLocaleDateString()}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <FileText className="h-4 w-4" />
+                              {job.source_count} insights
+                            </div>
+                          </div>
                         </div>
                       </div>
+
+                      <div className="flex flex-wrap gap-2 lg:justify-end">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/research/${job.id}`}>View Results</Link>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                          <a
+                            href={`/api/research/${job.id}/export?format=markdown`}
+                          >
+                            Export
+                          </a>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                          <a href={`/api/research/${job.id}/export?format=pdf`}>
+                            Export PDF
+                          </a>
+                        </Button>
+                      </div>
                     </div>
-
-                    <Badge
-                      className={
-                        job.status === "completed"
-                          ? "bg-accent"
-                          : job.status === "in_progress"
-                            ? "bg-primary"
-                            : "bg-destructive"
-                      }
-                    >
-                      {job.status === "completed"
-                        ? "Completed"
-                        : job.status === "in_progress"
-                          ? "In Progress"
-                          : "Failed"}
-                    </Badge>
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/research/${job.id}`}>View Results</Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <a
-                        href={`/api/research/${job.id}/export?format=markdown`}
-                      >
-                        Export
-                      </a>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <a href={`/api/research/${job.id}/export?format=pdf`}>
-                        Export PDF
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>

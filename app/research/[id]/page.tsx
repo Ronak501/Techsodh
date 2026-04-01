@@ -65,9 +65,9 @@ export default function ResearchDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b border-border/50 bg-card/50">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="border-b border-border/50 bg-linear-to-r from-card via-card/90 to-muted/40">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <Button asChild variant="ghost" size="sm">
               <Link href="/dashboard" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
@@ -75,15 +75,17 @@ export default function ResearchDetailPage() {
               </Link>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">Research Report</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl font-bold tracking-tight text-balance">
+                Research Report
+              </h1>
+              <p className="text-sm text-muted-foreground">
                 View and export a persisted report
               </p>
             </div>
           </div>
 
           {data ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" size="sm">
                 <a href={`/api/research/${data.id}/export?format=markdown`}>
                   <Download className="w-4 h-4 mr-2" />
@@ -107,17 +109,23 @@ export default function ResearchDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {loading ? <Card className="p-6">Loading report...</Card> : null}
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        {loading ? (
+          <Card className="border-border/70 bg-card/70 p-6 text-sm text-muted-foreground">
+            Loading report...
+          </Card>
+        ) : null}
 
         {!loading && error ? (
-          <Card className="p-6 text-red-500">{error}</Card>
+          <Card className="border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive">
+            {error}
+          </Card>
         ) : null}
 
         {!loading && !error && data ? (
           <div className="space-y-6">
-            <Card className="p-4 border-border/50 bg-card/40">
-              <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            <Card className="border-border/70 bg-card/70 p-5">
+              <div className="grid gap-4 text-sm sm:grid-cols-2">
                 <p>
                   <span className="font-semibold">Mode:</span>{" "}
                   {data.research_mode || "topic"}
