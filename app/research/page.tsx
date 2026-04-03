@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ResearchInterface } from "@/components/research-interface";
 import { ResearchSummary } from "@/components/research-summary";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FilePenLine } from "lucide-react";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import type { ResearchSummaryData } from "@/lib/research-types";
 
@@ -13,6 +13,12 @@ export default function ResearchPage() {
   const [summaryData, setSummaryData] = useState<ResearchSummaryData | null>(
     null,
   );
+
+  const headerPills = [
+    { label: "Mode guided", value: "Topic or claim" },
+    { label: "Output", value: "Report + verdicts" },
+    { label: "Shortcut", value: "Humanizer ready" },
+  ];
 
   return (
     <div className="research-surface min-h-screen bg-background">
@@ -27,6 +33,7 @@ export default function ResearchPage() {
                   { href: "/", label: "Home" },
                   { href: "/dashboard", label: "Dashboard" },
                   { href: "/chat", label: "Chat" },
+                  { href: "/humanizer", label: "Humanizer" },
                   { href: "/research", label: "Research" },
                 ]}
               />
@@ -36,22 +43,48 @@ export default function ResearchPage() {
                   Back
                 </Link>
               </Button>
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Research Workspace
-                </p>
-                <h1 className="text-3xl font-bold tracking-tight text-balance">
-                  Research Agent
-                </h1>
-                <p className="max-w-xl text-sm text-muted-foreground">
-                  Generate high-quality reports with references, confidence
-                  scoring, and export-ready structure.
-                </p>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/humanizer" className="gap-2">
+                  <FilePenLine className="w-4 h-4" />
+                  Humanizer
+                </Link>
+              </Button>
+              <div className="max-w-2xl space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-primary">
+                    Research Workspace
+                  </span>
+                  <span className="rounded-full border border-border/70 bg-card/70 px-3 py-1 text-xs text-muted-foreground">
+                    Template guided
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+                    New Research
+                  </h1>
+                  <p className="max-w-xl text-sm text-muted-foreground sm:text-base">
+                    Choose a template to shape the report before you search.
+                    Topic research builds structured reviews, while claim
+                    verification adds verdicts, fact checks, and evidence
+                    strength.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {headerPills.map((pill) => (
+                    <div
+                      key={pill.label}
+                      className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3"
+                    >
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        {pill.label}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {pill.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div className="glass-panel rounded-full px-4 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              3D Interface Active
             </div>
           </div>
         </div>

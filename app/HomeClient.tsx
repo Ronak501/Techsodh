@@ -14,6 +14,7 @@ import {
   Brain,
   Database,
   FileCheck2,
+  FilePenLine,
   Layers,
   MessageSquareText,
   Moon,
@@ -51,6 +52,35 @@ const features = [
     description:
       "Keep context in persistent chat threads linked to your research work.",
   },
+  {
+    icon: FilePenLine,
+    title: "Human Text Studio",
+    description:
+      "Rewrite rough drafts into natural copy with a focused humanizing pass.",
+  },
+];
+
+const heroStats = [
+  { label: "Research modes", value: "Topic + claim" },
+  { label: "Writing", value: "Humanizer studio" },
+  { label: "Delivery", value: "Chat + export" },
+];
+
+const productHighlights = [
+  {
+    title: "Research flow",
+    description:
+      "Build a report from sources, confidence, and evidence in one path.",
+  },
+  {
+    title: "Humanizer",
+    description: "Rewrite rough drafts into natural, publication-ready copy.",
+  },
+  {
+    title: "Team chat",
+    description:
+      "Keep follow-up decisions and revisions linked to each project.",
+  },
 ];
 
 export default function HomeClient({ user }: Props) {
@@ -68,6 +98,7 @@ export default function HomeClient({ user }: Props) {
         ? [
             { href: "/dashboard", label: "Dashboard" },
             { href: "/research", label: "Research" },
+            { href: "/humanizer", label: "Humanizer" },
             { href: "/chat", label: "Chat" },
             { href: "/price", label: "Pricing" },
           ]
@@ -76,6 +107,7 @@ export default function HomeClient({ user }: Props) {
             { href: "/signup", label: "Sign Up" },
             { href: "/price", label: "Pricing" },
             { href: "/research", label: "Research" },
+            { href: "/humanizer", label: "Humanizer" },
             { href: "/chat", label: "Chat" },
           ],
     [user],
@@ -197,13 +229,13 @@ export default function HomeClient({ user }: Props) {
             </div>
 
             <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-              3D research workspace for faster, better decisions.
+              One workspace for research, rewriting, and team decisions.
             </h1>
 
             <p className="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
               ResearchAgent combines retrieval, reasoning, report generation,
-              and chat into one polished product experience your team can use
-              every day.
+              humanized writing, and chat into one polished product experience
+              your team can use every day.
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -214,6 +246,9 @@ export default function HomeClient({ user }: Props) {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
+                <Link href="/humanizer">Humanize Text</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
                 <Link href="/chat">Open AI Chat</Link>
               </Button>
               <Button asChild size="lg" variant="ghost">
@@ -222,30 +257,31 @@ export default function HomeClient({ user }: Props) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="glass-panel rise-in rise-in-delay-1 rounded-2xl p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Pipeline
-                </p>
-                <p className="mt-2 text-sm font-medium">
-                  Retrieval to verdict in one flow
-                </p>
-              </div>
-              <div className="glass-panel rise-in rise-in-delay-2 rounded-2xl p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Output
-                </p>
-                <p className="mt-2 text-sm font-medium">
-                  Professional reports with references
-                </p>
-              </div>
-              <div className="glass-panel rise-in rise-in-delay-3 rounded-2xl p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Collaboration
-                </p>
-                <p className="mt-2 text-sm font-medium">
-                  Persistent chat for team context
-                </p>
-              </div>
+              {heroStats.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm backdrop-blur"
+                >
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-foreground/90">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <span className="rounded-full border border-border/60 bg-card/70 px-3 py-1">
+                Premium visual system
+              </span>
+              <span className="rounded-full border border-border/60 bg-card/70 px-3 py-1">
+                Mobile-friendly navigation
+              </span>
+              <span className="rounded-full border border-border/60 bg-card/70 px-3 py-1">
+                Clearer product storytelling
+              </span>
             </div>
           </div>
 
@@ -259,35 +295,41 @@ export default function HomeClient({ user }: Props) {
               style={{ transform: orbitTransform }}
             >
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Live Research Orbit</p>
+                <p className="text-sm font-semibold">Product snapshot</p>
                 <Layers className="h-4 w-4 text-muted-foreground" />
               </div>
 
-              <div className="mt-6 space-y-4">
-                <div className="rounded-2xl border border-border/70 bg-background/60 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Step 1
-                  </p>
-                  <p className="mt-2 text-sm">
-                    Gather sources and build outline
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/60 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Step 2
-                  </p>
-                  <p className="mt-2 text-sm">
-                    Generate structured analysis and claims
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/60 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Step 3
-                  </p>
-                  <p className="mt-2 text-sm">
-                    Export clean report and continue in chat
-                  </p>
-                </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                {heroStats.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-border/70 bg-background/60 p-4"
+                  >
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-sm font-medium">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {productHighlights.map((item, index) => (
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-border/70 bg-background/60 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        0{index + 1}
+                      </p>
+                      <p className="text-sm font-semibold">{item.title}</p>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
               </div>
             </Card>
           </div>
@@ -317,7 +359,9 @@ export default function HomeClient({ user }: Props) {
                       : ""
                 }`}
               >
-                <feature.icon className="h-8 w-8 text-primary" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-accent/20">
+                  <feature.icon className="h-6 w-6 text-primary" />
+                </div>
                 <h3 className="mt-5 text-lg font-semibold">{feature.title}</h3>
                 <p className="mt-2 text-sm leading-7 text-muted-foreground">
                   {feature.description}
@@ -356,6 +400,9 @@ export default function HomeClient({ user }: Props) {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
+                <Button asChild size="lg" variant="ghost">
+                  <Link href="/humanizer">Open Humanizer</Link>
+                </Button>
               </div>
             </div>
           </Card>
@@ -371,6 +418,12 @@ export default function HomeClient({ user }: Props) {
           <div className="flex items-center gap-6">
             <Link href="/price" className="transition hover:text-foreground">
               Pricing
+            </Link>
+            <Link
+              href="/humanizer"
+              className="transition hover:text-foreground"
+            >
+              Humanizer
             </Link>
             <Link href="/signin" className="transition hover:text-foreground">
               Login

@@ -199,6 +199,7 @@
 
   .home-surface,
   .chat-surface,
+  .humanizer-surface,
   .research-surface {
     position: relative;
     isolation: isolate;
@@ -208,6 +209,8 @@
   .home-surface::after,
   .chat-surface::before,
   .chat-surface::after,
+  .humanizer-surface::before,
+  .humanizer-surface::after,
   .research-surface::before,
   .research-surface::after {
     content: "";
@@ -221,6 +224,7 @@
 
   .home-surface::before,
   .chat-surface::before,
+  .humanizer-surface::before,
   .research-surface::before {
     width: 20rem;
     height: 20rem;
@@ -231,6 +235,7 @@
 
   .home-surface::after,
   .chat-surface::after,
+  .humanizer-surface::after,
   .research-surface::after {
     width: 16rem;
     height: 16rem;

@@ -98,7 +98,7 @@ export async function enforceSubscriptionAndTokenAccess(
   params: {
     userId: string
     requestedTokens: number
-    feature: "chat" | "research"
+    feature: "chat" | "research" | "humanize"
   }
 ): Promise<SubscriptionGuardResult> {
   const upgradeUrl = "/price"

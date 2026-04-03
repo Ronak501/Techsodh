@@ -12,6 +12,28 @@ import type {
   ResearchTemplate,
 } from "@/lib/research-types";
 
+const templateDescriptions: Record<ResearchTemplate, string> = {
+  literature_review:
+    "Best for surveying sources, comparing viewpoints, and building a structured overview.",
+  technical_report:
+    "Best for formal analysis with methods, findings, and implementation-focused detail.",
+  claim_verification:
+    "Best for checking whether a claim is supported, contradicted, or still uncertain.",
+};
+
+const modeTabs = [
+  {
+    value: "topic" as const,
+    label: "Topic Research",
+    description: "Explore a subject and generate a full report.",
+  },
+  {
+    value: "claim" as const,
+    label: "Claim Verification",
+    description: "Test one statement against evidence and sources.",
+  },
+];
+
 type ResearchResult = {
   id: string;
   title: string;
@@ -28,6 +50,7 @@ type StreamProgress = {
 
 interface Props {
   setSummaryData: (data: ResearchSummaryData) => void;
+  onReportGenerated?: (reportId: string) => void;
 }
 
 const defaultPreferences: ResearchPreferences = {
@@ -37,7 +60,10 @@ const defaultPreferences: ResearchPreferences = {
   model_name: "gemini-default",
 };
 
-export function ResearchInterface({ setSummaryData }: Props) {
+export function ResearchInterface({
+  setSummaryData,
+  onReportGenerated,
+}: Props) {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<"topic" | "claim">("topic");
   const [template, setTemplate] =
@@ -53,6 +79,7 @@ export function ResearchInterface({ setSummaryData }: Props) {
   const [streamProgress, setStreamProgress] = useState<StreamProgress[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
   const [upgradeUrl, setUpgradeUrl] = useState<string | null>(null);
+  const isClaimMode = mode === "claim";
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -63,6 +90,9 @@ export function ResearchInterface({ setSummaryData }: Props) {
 
         setPreferences(data);
         setTemplate(data.preferred_template);
+        setMode(
+          data.preferred_template === "claim_verification" ? "claim" : "topic",
+        );
       } catch (error) {
         console.error("Failed to load preferences", error);
       } finally {
@@ -209,6 +239,10 @@ export function ResearchInterface({ setSummaryData }: Props) {
       ]);
 
       setSummaryData(completed);
+
+      if (completed.id && onReportGenerated) {
+        onReportGenerated(completed.id);
+      }
     } catch (error) {
       console.error("API Error:", error);
       setApiError(error instanceof Error ? error.message : "Request failed");
@@ -246,29 +280,41 @@ export function ResearchInterface({ setSummaryData }: Props) {
               <label className="block text-sm font-medium mb-3">
                 Research Mode
               </label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Button
-                  type="button"
-                  variant={mode === "topic" ? "default" : "outline"}
-                  onClick={() => {
-                    setMode("topic");
-                    if (template === "claim_verification") {
-                      setTemplate("literature_review");
-                    }
-                  }}
-                >
-                  Topic Research
-                </Button>
-                <Button
-                  type="button"
-                  variant={mode === "claim" ? "default" : "outline"}
-                  onClick={() => {
-                    setMode("claim");
-                    setTemplate("claim_verification");
-                  }}
-                >
-                  Claim Verification
-                </Button>
+              <div
+                role="tablist"
+                aria-label="Research mode"
+                className="grid gap-2 rounded-2xl border border-border/60 bg-muted/20 p-2 sm:grid-cols-2"
+              >
+                {modeTabs.map((item) => {
+                  const selected = mode === item.value;
+
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      className={
+                        selected
+                          ? "rounded-xl border border-primary/35 bg-primary/10 px-4 py-3 text-left transition"
+                          : "rounded-xl border border-transparent px-4 py-3 text-left transition hover:bg-background/60"
+                      }
+                      onClick={() => {
+                        setMode(item.value);
+                        if (item.value === "claim") {
+                          setTemplate("claim_verification");
+                        } else if (template === "claim_verification") {
+                          setTemplate("literature_review");
+                        }
+                      }}
+                    >
+                      <div className="text-sm font-medium">{item.label}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {item.description}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -280,11 +326,18 @@ export function ResearchInterface({ setSummaryData }: Props) {
                 onChange={(e) =>
                   setTemplate(e.target.value as ResearchTemplate)
                 }
+                disabled={isClaimMode}
               >
                 <option value="literature_review">Literature Review</option>
                 <option value="technical_report">Technical Report</option>
                 <option value="claim_verification">Claim Verification</option>
               </select>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {templateDescriptions[template]}
+                {isClaimMode
+                  ? " Claim verification always uses the claim template so the report includes verdicts, fact checks, and evidence strength."
+                  : " The template controls the structure, tone, and analysis sections in the final report."}
+              </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
@@ -361,16 +414,17 @@ export function ResearchInterface({ setSummaryData }: Props) {
 
             <div>
               <label className="block text-sm font-medium mb-3">
-                {mode === "claim" ? "Claim" : "Research Query"}
+                {isClaimMode ? "Claim" : "Research Query"}
               </label>
               <p className="mb-3 text-xs text-muted-foreground">
-                Be specific about scope, timeline, and expected output quality
-                for better results.
+                {isClaimMode
+                  ? "Enter one statement you want checked. The claim template will generate verdicts and fact checks."
+                  : "Be specific about scope, timeline, and expected output quality for better results."}
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   placeholder={
-                    mode === "claim"
+                    isClaimMode
                       ? "Enter a claim to verify..."
                       : "Enter your research query..."
                   }

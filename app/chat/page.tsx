@@ -12,6 +12,7 @@ import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import {
   ArrowRight,
   LayoutDashboard,
+  FilePenLine,
   MessageSquareText,
   Plus,
   Search,
@@ -239,9 +240,21 @@ export default function ChatPage() {
                   { href: "/", label: "Home" },
                   { href: "/dashboard", label: "Dashboard" },
                   { href: "/research", label: "Research" },
+                  { href: "/humanizer", label: "Humanizer" },
                   { href: "/chat", label: "Chat" },
                 ]}
               />
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex gap-2"
+              >
+                <Link href="/humanizer">
+                  <FilePenLine className="h-4 w-4" />
+                  Humanizer
+                </Link>
+              </Button>
               <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-primary">
                 <Sparkles className="mr-2 h-3.5 w-3.5" />
                 3D mode

@@ -28,7 +28,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("research_reports")
-    .select("id, query, status, research_mode, template, output_style, depth, model_name, prompt_tokens, completion_tokens, estimated_cost_usd, outline, report, source_count, created_at, updated_at")
+    .select("id, query, status, research_mode, template, output_style, depth, model_name, prompt_tokens, completion_tokens, estimated_cost_usd, outline, report, source_count, latency_ms, created_at, updated_at")
     .eq("id", parsedParams.data.id)
     .eq("user_id", user.id)
     .single()

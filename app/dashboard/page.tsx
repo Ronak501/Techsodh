@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -15,6 +16,7 @@ import {
   Calendar,
   CircleCheckBig,
   FileText,
+  FilePenLine,
   Sparkles,
   Workflow,
 } from "lucide-react";
@@ -29,6 +31,24 @@ type ResearchJob = {
   estimated_cost_usd: number;
   created_at: string;
 };
+
+const dashboardHighlights = [
+  {
+    label: "Research coverage",
+    value: "All runs in one place",
+    detail: "Search, filter, and review every report from the same workspace.",
+  },
+  {
+    label: "Workflow modes",
+    value: "Research + Humanizer",
+    detail: "Move from research to rewriting without leaving the product.",
+  },
+  {
+    label: "Delivery loop",
+    value: "Chat, export, repeat",
+    detail: "Continue the conversation after every report is generated.",
+  },
+];
 
 const statusMeta = {
   completed: {
@@ -209,6 +229,17 @@ export default function DashboardPage() {
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <MobileNavDrawer
+                title="Dashboard Navigation"
+                items={[
+                  { href: "/", label: "Home" },
+                  { href: "/dashboard", label: "Dashboard" },
+                  { href: "/research", label: "Research" },
+                  { href: "/humanizer", label: "Humanizer" },
+                  { href: "/chat", label: "Chat" },
+                  { href: "/price", label: "Pricing" },
+                ]}
+              />
               <Button asChild variant="ghost" size="sm" className="w-fit">
                 <Link href="/" className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
@@ -245,6 +276,12 @@ export default function DashboardPage() {
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
+                <Link href="/humanizer" className="gap-2">
+                  <FilePenLine className="h-4 w-4" />
+                  Humanizer
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
                 <Link href="/chat">Conversations</Link>
               </Button>
             </div>
@@ -261,16 +298,38 @@ export default function DashboardPage() {
                 Product showcase
               </Badge>
               <Badge variant="secondary">Research hub</Badge>
+              <Badge variant="secondary">Humanizer access</Badge>
             </div>
-            <div className="mt-5 space-y-4">
-              <h2 className="max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
-                A 3D command center for your team’s research software.
-              </h2>
-              <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-                Use the platform to generate reports, verify claims, export
-                polished outputs, and manage the full research workflow from one
-                place.
-              </p>
+            <div className="mt-5 grid gap-6 lg:grid-cols-[1.15fr_.85fr] lg:items-start">
+              <div className="space-y-4">
+                <h2 className="max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+                  A command center for research, rewrite, and review.
+                </h2>
+                <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                  Use the platform to generate reports, verify claims, humanize
+                  rough text, and manage the full research workflow from one
+                  place.
+                </p>
+              </div>
+
+              <div className="grid gap-3">
+                {dashboardHighlights.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-border/60 bg-background/60 p-4"
+                  >
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {item.value}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
