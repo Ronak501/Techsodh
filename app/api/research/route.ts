@@ -160,11 +160,13 @@ export async function POST(request: Request) {
       const payload = cached.report_payload as {
         outline: unknown
         report: unknown
+        humanized_report?: unknown
         usage?: {
           prompt_tokens?: number
           completion_tokens?: number
           estimated_cost_usd?: number
         }
+        humanization_used?: boolean
       }
 
       const { data: cachedReport } = await supabase
@@ -181,6 +183,7 @@ export async function POST(request: Request) {
             model_name: settings.model_name,
             outline: payload.outline,
             report: payload.report,
+            humanized_report: payload.humanized_report || payload.report,
             prompt_tokens: Number(payload.usage?.prompt_tokens || 0),
             completion_tokens: Number(payload.usage?.completion_tokens || 0),
             estimated_cost_usd: Number(payload.usage?.estimated_cost_usd || 0),
@@ -205,6 +208,8 @@ export async function POST(request: Request) {
         settings,
         outline: payload.outline,
         report: payload.report,
+        humanized_report: payload.humanized_report,
+        humanization_used: payload.humanization_used,
         usage: payload.usage || {
           prompt_tokens: 0,
           completion_tokens: 0,
@@ -269,6 +274,7 @@ export async function POST(request: Request) {
         status: "completed",
         outline: pipeline.outline,
         report: pipeline.report,
+        humanized_report: pipeline.humanized_report || pipeline.report,
         prompt_tokens: pipeline.usage.prompt_tokens,
         completion_tokens: pipeline.usage.completion_tokens,
         estimated_cost_usd: pipeline.usage.estimated_cost_usd,
@@ -297,7 +303,9 @@ export async function POST(request: Request) {
         report_payload: {
           outline: pipeline.outline,
           report: pipeline.report,
+          humanized_report: pipeline.humanized_report || pipeline.report,
           usage: pipeline.usage,
+          humanization_used: pipeline.humanization_used,
         },
         source_report_id: researchId,
         expires_at: new Date(Date.now() + CACHE_TTL_MS).toISOString(),
@@ -337,6 +345,8 @@ export async function POST(request: Request) {
       settings,
       outline: pipeline.outline,
       report: pipeline.report,
+      humanized_report: pipeline.humanized_report,
+      humanization_used: pipeline.humanization_used,
       usage: pipeline.usage,
       cached: false,
     }

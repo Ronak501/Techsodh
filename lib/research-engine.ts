@@ -10,6 +10,7 @@ import type {
   ReferenceItem,
   SectionConfidence,
 } from "@/lib/research-types"
+import { humanizeText, type HumanizeTone } from "@/lib/humanizer"
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
 const GEMINI_API = process.env.GEMINI_API!
@@ -33,8 +34,10 @@ export type ResearchPipelineUsage = {
 export type ResearchPipelineOutput = {
   outline: ResearchOutline
   report: ResearchReportBody
+  humanized_report?: ResearchReportBody
   usage: ResearchPipelineUsage
   cacheKey: string
+  humanization_used?: boolean
 }
 
 const defaultPreferences: ResearchPreferences = {
@@ -45,6 +48,7 @@ const defaultPreferences: ResearchPreferences = {
 }
 
 const RETRY_ATTEMPTS = 5
+const JSON_PARSE_ATTEMPTS = 3
 const BASE_RETRY_DELAY_MS = 600
 const MAX_RETRY_DELAY_MS = 12_000
 
@@ -52,6 +56,14 @@ type GeminiResult = {
   text: string
   promptTokens: number
   completionTokens: number
+  finishReason?: string
+}
+
+type RetryContext = {
+  attempt: number
+  totalAttempts: number
+  statusCode?: number
+  retryAfter?: string
   finishReason?: string
 }
 
@@ -227,13 +239,13 @@ async function callGeminiForJson<T>(
   settings: ResearchSettings,
   phase: string
 ): Promise<{ parsed: T; promptTokens: number; completionTokens: number }> {
-  const attempts = 3
   let totalPromptTokens = 0
   let totalCompletionTokens = 0
   let lastError: Error | null = null
   let lastResponse = ""
+  let lastFinishReason: string | undefined = undefined
 
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+  for (let attempt = 1; attempt <= JSON_PARSE_ATTEMPTS; attempt += 1) {
     const strictPrompt =
       attempt === 1
         ? prompt
@@ -245,6 +257,7 @@ async function callGeminiForJson<T>(
     totalPromptTokens += result.promptTokens
     totalCompletionTokens += result.completionTokens
     lastResponse = result.text
+    lastFinishReason = result.finishReason
 
     try {
       return {
@@ -259,41 +272,51 @@ async function callGeminiForJson<T>(
           : new Error(`Failed to parse ${phase} JSON response`)
 
       // If the generation is truncated or malformed, ask the model to repair only the JSON.
-      try {
-        const repaired = await repairGeminiJson<T>(result.text, settings)
-        totalPromptTokens += repaired.promptTokens
-        totalCompletionTokens += repaired.completionTokens
+      if (attempt < JSON_PARSE_ATTEMPTS) {
+        try {
+          const repaired = await repairGeminiJson<T>(result.text, settings)
+          totalPromptTokens += repaired.promptTokens
+          totalCompletionTokens += repaired.completionTokens
 
-        return {
-          parsed: repaired.parsed,
-          promptTokens: totalPromptTokens,
-          completionTokens: totalCompletionTokens,
+          console.info(`Successfully repaired ${phase} JSON on attempt ${attempt}`, {
+            finishReason: lastFinishReason,
+            responseLength: result.text.length,
+            truncated: result.text.endsWith("]") === false && result.text.endsWith("}") === false,
+          })
+
+          return {
+            parsed: repaired.parsed,
+            promptTokens: totalPromptTokens,
+            completionTokens: totalCompletionTokens,
+          }
+        } catch (repairError) {
+          const repairMessage =
+            repairError instanceof Error
+              ? repairError.message
+              : "JSON repair attempt failed"
+          lastError = new Error(`${lastError.message}; repair failed: ${repairMessage}`)
         }
-      } catch (repairError) {
-        const repairMessage =
-          repairError instanceof Error
-            ? repairError.message
-            : "JSON repair attempt failed"
-        lastError = new Error(`${lastError.message}; ${repairMessage}`)
       }
       
       const responsePreview = result.text.substring(0, 300)
-      if (attempt < attempts) {
-        console.warn(`Failed to parse ${phase} JSON response; retrying`, {
+      if (attempt < JSON_PARSE_ATTEMPTS) {
+        console.warn(`Failed to parse ${phase} JSON response (attempt ${attempt}/${JSON_PARSE_ATTEMPTS})`, {
           attempt,
+          phase,
           reason: lastError.message,
           responsePreview,
           responseLength: result.text.length,
-          finishReason: result.finishReason || "unknown",
+          finishReason: lastFinishReason || "unknown",
+          isTruncated: lastFinishReason === "STOP" && !result.text.trim().endsWith("}") && !result.text.trim().endsWith("]"),
         })
       }
     }
   }
 
   throw new Error(
-    `Model returned non-JSON ${phase} response after ${attempts} attempts${
+    `Model returned non-JSON ${phase} response after ${JSON_PARSE_ATTEMPTS} parse attempts${
       lastError?.message ? `: ${lastError.message}` : ""
-    }\nResponse preview: ${lastResponse.substring(0, 500)}${lastResponse.length > 500 ? "..." : ""}`
+    }\nfinishReason: ${lastFinishReason || "unknown"}\nResponse preview: ${lastResponse.substring(0, 500)}${lastResponse.length > 500 ? "..." : ""}`
   )
 }
 
@@ -301,25 +324,78 @@ async function repairGeminiJson<T>(
   brokenJson: string,
   settings: ResearchSettings
 ): Promise<{ parsed: T; promptTokens: number; completionTokens: number }> {
+  // Attempt quick fix for common truncation patterns
+  const quickFixed = attemptQuickJsonRepair(brokenJson)
+  if (quickFixed) {
+    try {
+      return {
+        parsed: JSON.parse(quickFixed) as T,
+        promptTokens: 0,
+        completionTokens: 0,
+      }
+    } catch {
+      // Continue to full repair
+    }
+  }
+
   const repairPrompt = `
 You are a strict JSON repair assistant.
 Task: return a corrected RFC8259-valid JSON document from the broken input below.
 Rules:
-- Return JSON only.
+- Return ONLY valid JSON with NO explanations, markdown, or extra text.
 - Keep the same top-level structure and keys.
-- Do not add markdown/code fences/comments/explanations.
-- If content is truncated, complete the JSON with reasonable placeholders while preserving schema.
+- If content is truncated or incomplete, complete the JSON with reasonable defaults (null, empty strings, or empty arrays) while preserving the intended schema.
+- Ensure all brackets/braces are properly closed.
 Broken JSON:
-${brokenJson}
+${brokenJson.substring(0, 2000)}
 `
 
   const repaired = await callGemini(repairPrompt, settings, { expectJson: true })
 
-  return {
-    parsed: extractJSON<T>(repaired.text),
-    promptTokens: repaired.promptTokens,
-    completionTokens: repaired.completionTokens,
+  try {
+    return {
+      parsed: extractJSON<T>(repaired.text),
+      promptTokens: repaired.promptTokens,
+      completionTokens: repaired.completionTokens,
+    }
+  } catch (e) {
+    throw new Error(`JSON repair response was also invalid: ${e instanceof Error ? e.message : "Parse error"}`)
   }
+}
+
+function attemptQuickJsonRepair(brokenJson: string): string | null {
+  const trimmed = brokenJson.trim()
+  
+  // If it ends abruptly, try to close the JSON structure
+  if (trimmed.startsWith("{")) {
+    const openBraces = (trimmed.match(/\{/g) || []).length
+    const closeBraces = (trimmed.match(/\}/g) || []).length
+    if (openBraces > closeBraces) {
+      const missing = "}".repeat(openBraces - closeBraces)
+      const repaired = trimmed + missing
+      try {
+        JSON.parse(repaired)
+        return repaired
+      } catch {
+        // Not a simple fix
+      }
+    }
+  } else if (trimmed.startsWith("[")) {
+    const openBrackets = (trimmed.match(/\[/g) || []).length
+    const closeBrackets = (trimmed.match(/\]/g) || []).length
+    if (openBrackets > closeBrackets) {
+      const missing = "]".repeat(openBrackets - closeBrackets)
+      const repaired = trimmed + missing
+      try {
+        JSON.parse(repaired)
+        return repaired
+      } catch {
+        // Not a simple fix
+      }
+    }
+  }
+  
+  return null
 }
 
 function parseRetryAfterMs(value: string | null): number | null {
@@ -337,14 +413,21 @@ function parseRetryAfterMs(value: string | null): number | null {
   return delta > 0 ? delta : 0
 }
 
-function computeRetryDelayMs(attempt: number, retryAfterMs?: number | null) {
+function computeRetryDelayMs(attempt: number, retryAfterMs?: number | null, statusCode?: number) {
+  // If server specified Retry-After, respect it (also cap to max)
   if (typeof retryAfterMs === "number" && retryAfterMs >= 0) {
-    return Math.min(retryAfterMs, MAX_RETRY_DELAY_MS)
+    const honoreDelay = Math.min(retryAfterMs, MAX_RETRY_DELAY_MS)
+    console.info(`Honoring Retry-After header: ${honoreDelay}ms (status: ${statusCode})`)
+    return honoreDelay
   }
 
-  const exponential = BASE_RETRY_DELAY_MS * 2 ** (attempt - 1)
-  const jitter = Math.floor(Math.random() * 250)
-  return Math.min(exponential + jitter, MAX_RETRY_DELAY_MS)
+  // Exponential backoff: 600ms, 1.2s, 2.4s, 4.8s, 9.6s
+  const exponential = BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1)
+  const jitter = Math.floor(Math.random() * 1000) // Increase jitter range
+  const delayMs = Math.min(exponential + jitter, MAX_RETRY_DELAY_MS)
+  
+  console.debug(`Retry delay computed: ${delayMs}ms (attempt: ${attempt}, exponential: ${exponential}ms, jitter: ${jitter}ms)`)
+  return delayMs
 }
 
 async function callGeminiWithRetry(
@@ -364,6 +447,8 @@ async function callGeminiWithRetry(
   const maxOutputTokens = settings.depth === "deep" ? 4096 : 2048
 
   let lastError: Error | null = null
+  let lastStatusCode: number | undefined
+  let lastFinishReason: string | undefined
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt += 1) {
     try {
@@ -380,18 +465,33 @@ async function callGeminiWithRetry(
         }),
       })
 
+      lastStatusCode = res.status
+
       if (!res.ok) {
         const retryAfterMs = parseRetryAfterMs(res.headers.get("retry-after"))
         const responseText = await res.text().catch(() => "")
+        const isRateLimited = res.status === 429
+        const isServerError = res.status >= 500
         const detail = responseText
           ? `: ${responseText.substring(0, 400)}`
           : ""
         const error = new Error(
-          `Gemini request failed (${res.status})${detail}`
+          `Gemini request failed (${res.status}${isRateLimited ? " - RATE LIMITED" : isServerError ? " - SERVER ERROR" : ""})${detail}`
         )
 
         if (attempt < RETRY_ATTEMPTS) {
-          const delayMs = computeRetryDelayMs(attempt, retryAfterMs)
+          const delayMs = computeRetryDelayMs(attempt, retryAfterMs, res.status)
+          const context = {
+            attempt,
+            totalAttempts: RETRY_ATTEMPTS,
+            statusCode: res.status,
+            isRateLimited,
+            isServerError,
+            retryAfter: res.headers.get("retry-after"),
+            delayMs,
+            nextAttemptIn: `${(delayMs / 1000).toFixed(1)}s`,
+          }
+          console.warn(`Gemini request failed; retrying`, context)
           await new Promise((resolve) => setTimeout(resolve, delayMs))
           continue
         }
@@ -406,6 +506,9 @@ async function callGeminiWithRetry(
         throw new Error(`Gemini API error: ${data.error.message || JSON.stringify(data.error)}`)
       }
       
+      const finishReason = data.candidates?.[0]?.finishReason
+      lastFinishReason = finishReason
+      
       const parts = data.candidates?.[0]?.content?.parts
       const text = Array.isArray(parts)
         ? parts
@@ -415,13 +518,14 @@ async function callGeminiWithRetry(
         : ""
 
       if (!text) {
-        const reason = data.candidates?.[0]?.finishReason || "unknown"
+        const reason = finishReason || "unknown"
+        const errorDetails = {
+          finishReason: reason,
+          safetyRatings: data.candidates?.[0]?.safetyRatings,
+          candidateCount: data.candidates?.length || 0,
+        }
         throw new Error(
-          `Empty Gemini response (finish reason: ${reason}). ${
-            data.candidates?.[0]?.safetyRatings?.length 
-              ? `Safety ratings: ${JSON.stringify(data.candidates[0].safetyRatings)}` 
-              : ""
-          }`
+          `Empty Gemini response (finish reason: ${reason}). Details: ${JSON.stringify(errorDetails)}`
         )
       }
 
@@ -429,19 +533,27 @@ async function callGeminiWithRetry(
         text,
         promptTokens: Number(data.usageMetadata?.promptTokenCount || 0),
         completionTokens: Number(data.usageMetadata?.candidatesTokenCount || 0),
-        finishReason: data.candidates?.[0]?.finishReason,
+        finishReason,
       }
     } catch (error) {
       lastError = error instanceof Error ? error : new Error("Model request failed")
 
       if (attempt < RETRY_ATTEMPTS) {
-        const delayMs = computeRetryDelayMs(attempt)
+        const delayMs = computeRetryDelayMs(attempt, undefined, lastStatusCode)
+        console.error(`Attempt ${attempt}/${RETRY_ATTEMPTS} failed:`, {
+          error: lastError.message,
+          statusCode: lastStatusCode,
+          finishReason: lastFinishReason,
+          nextRetryIn: `${(delayMs / 1000).toFixed(1)}s`,
+        })
         await new Promise((resolve) => setTimeout(resolve, delayMs))
       }
     }
   }
 
-  throw lastError || new Error("Model request failed after retries")
+  throw new Error(
+    `Gemini request failed after ${RETRY_ATTEMPTS} transport retries (last status: ${lastStatusCode}, finishReason: ${lastFinishReason || "unknown"}). Final error: ${lastError?.message || "unknown"}`
+  )
 }
 
 async function callGemini(
@@ -544,6 +656,80 @@ function normalizeReport(report: ResearchReportBody): ResearchReportBody {
   }
 }
 
+async function humanizeReport(
+  report: ResearchReportBody,
+  tone: HumanizeTone = "professional"
+): Promise<ResearchReportBody> {
+  const sections = {
+    executive_summary: report.executive_summary || "",
+    introduction: report.introduction || "",
+    main_analysis: report.main_analysis || "",
+    challenges: report.challenges || "",
+    future_scope: report.future_scope || "",
+    conclusion: report.conclusion || "",
+  }
+
+  const humanizedSections: Record<string, string> = {}
+  let humanized = false
+
+  try {
+    for (const [key, content] of Object.entries(sections)) {
+      if (content.trim().length > 50) {
+        try {
+          console.info(`Humanizing ${key}...`, { contentLength: content.length })
+          const result = await Promise.race([
+            humanizeText(content, tone),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error(`Humanization timeout for ${key}`)), 30000)
+            ),
+          ])
+          humanizedSections[key] = result.text
+          humanized = true
+          console.info(`Successfully humanized ${key}`, {
+            originalLength: content.length,
+            humanizedLength: result.text.length,
+          })
+        } catch (error) {
+          console.warn(`Failed to humanize ${key}, keeping original`, {
+            error: error instanceof Error ? error.message : "unknown",
+          })
+          humanizedSections[key] = content
+        }
+      } else {
+        humanizedSections[key] = content
+      }
+    }
+  } catch (error) {
+    console.error("Humanization process failed, returning original report", {
+      error: error instanceof Error ? error.message : "unknown",
+    })
+    return report
+  }
+
+  if (!humanized) {
+    console.warn("No sections were humanized")
+    return report
+  }
+
+  return {
+    ...report,
+    executive_summary: humanizedSections.executive_summary,
+    introduction: humanizedSections.introduction,
+    main_analysis: humanizedSections.main_analysis,
+    challenges: humanizedSections.challenges,
+    future_scope: humanizedSections.future_scope,
+    conclusion: humanizedSections.conclusion,
+    key_insights: report.key_insights,
+    real_world_applications: report.real_world_applications,
+    references: report.references,
+    fact_checks: report.fact_checks,
+    section_confidence: report.section_confidence,
+    verdict: report.verdict,
+    verdict_confidence: report.verdict_confidence,
+    evidence_strength: report.evidence_strength,
+  }
+}
+
 export async function runResearchPipeline(
   input: ResearchPipelineInput,
   onProgress?: (step: string, detail: string) => void
@@ -631,14 +817,32 @@ Return JSON only:
   const completionTokens =
     outlineResult.completionTokens + reportResult.completionTokens
 
+  let humanizedReport: ResearchReportBody | undefined
+  let humanizationUsed = false
+
+  try {
+    console.info("Starting humanization of report...")
+    const tone = settings.output_style === "concise" ? "concise" : "professional"
+    humanizedReport = await humanizeReport(report, tone as HumanizeTone)
+    humanizationUsed = humanizedReport !== report
+    console.info("Humanization completed", { humanizationUsed })
+  } catch (error) {
+    console.warn("Humanization failed; using original report", {
+      error: error instanceof Error ? error.message : "unknown",
+    })
+    humanizedReport = report
+  }
+
   return {
     outline,
-    report,
+    report: humanizedReport || report,
+    humanized_report: humanizedReport,
     usage: {
       prompt_tokens: promptTokens,
       completion_tokens: completionTokens,
       estimated_cost_usd: estimateCostUsd(promptTokens, completionTokens),
     },
     cacheKey: buildCacheKey(query),
+    humanization_used: humanizationUsed,
   }
 }

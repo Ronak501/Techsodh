@@ -3,9 +3,14 @@
 import type { ResearchSummaryData } from "@/lib/research-types";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 interface Props {
   summaryData: ResearchSummaryData;
+  showHumanizationToggle?: boolean;
+  isHumanized?: boolean;
+  onToggleHumanization?: () => void;
 }
 
 function splitParagraphs(value?: string) {
@@ -80,7 +85,12 @@ function getEvidenceTone(level?: string) {
   };
 }
 
-export function ResearchSummary({ summaryData }: Props) {
+export function ResearchSummary({
+  summaryData,
+  showHumanizationToggle,
+  isHumanized,
+  onToggleHumanization,
+}: Props) {
   if (!summaryData) return null;
 
   const report = summaryData?.report;
@@ -108,25 +118,41 @@ export function ResearchSummary({ summaryData }: Props) {
   return (
     <div className="space-y-6 lg:space-y-8">
       <div className="rounded-3xl border border-border/70 bg-card/70 p-5 shadow-sm backdrop-blur sm:p-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Research Output
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold leading-tight text-balance sm:text-3xl">
-          {summaryData.research_topic}
-        </h2>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Badge variant="secondary">
-            {toTitleCase(summaryData.research_mode || "topic")}
-          </Badge>
-          <Badge variant="secondary">
-            {toTitleCase(summaryData.template || "literature_review")}
-          </Badge>
-          <Badge variant="secondary">
-            {toTitleCase(summaryData.settings?.output_style || "balanced")}
-          </Badge>
-          <Badge variant="secondary">
-            {toTitleCase(summaryData.settings?.depth || "standard")}
-          </Badge>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex-1">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Research Output
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold leading-tight text-balance sm:text-3xl">
+              {summaryData.research_topic}
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge variant="secondary">
+                {toTitleCase(summaryData.research_mode || "topic")}
+              </Badge>
+              <Badge variant="secondary">
+                {toTitleCase(summaryData.template || "literature_review")}
+              </Badge>
+              <Badge variant="secondary">
+                {toTitleCase(summaryData.settings?.output_style || "balanced")}
+              </Badge>
+              <Badge variant="secondary">
+                {toTitleCase(summaryData.settings?.depth || "standard")}
+              </Badge>
+            </div>
+          </div>
+          {showHumanizationToggle && (
+            <Button
+              type="button"
+              variant={isHumanized ? "default" : "outline"}
+              size="sm"
+              onClick={onToggleHumanization}
+              className="gap-2 whitespace-nowrap"
+            >
+              <Sparkles className="h-4 w-4" />
+              {isHumanized ? "Human tone" : "AI tone"}
+            </Button>
+          )}
         </div>
       </div>
 

@@ -45,6 +45,8 @@ type ResearchReport = {
   latency_ms?: number;
   outline: ResearchSummaryData["outline"];
   report: ResearchSummaryData["report"];
+  humanized_report?: ResearchSummaryData["report"];
+  humanization_used?: boolean;
   created_at: string;
   updated_at?: string;
 };
@@ -67,6 +69,7 @@ export default function ResearchDetailPage() {
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
   const [feedbackSaving, setFeedbackSaving] = useState(false);
+  const [useHumanized, setUseHumanized] = useState(true);
 
   useEffect(() => {
     const loadReport = async () => {
@@ -525,8 +528,16 @@ export default function ResearchDetailPage() {
                   model_name: data.model_name || "gemini-default",
                 },
                 outline: data.outline,
-                report: data.report,
+                report:
+                  useHumanized && data.humanized_report
+                    ? data.humanized_report
+                    : data.report,
               }}
+              showHumanizationToggle={
+                !!data.humanized_report && data.humanization_used
+              }
+              isHumanized={useHumanized}
+              onToggleHumanization={() => setUseHumanized(!useHumanized)}
             />
           </div>
         ) : null}
