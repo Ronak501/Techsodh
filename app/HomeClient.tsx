@@ -10,16 +10,24 @@ import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+  Activity,
   ArrowRight,
   Brain,
+  CheckCircle2,
   Database,
+  FileBarChart,
   FileCheck2,
   FilePenLine,
+  Globe,
   Layers,
+  Lock,
   MessageSquareText,
   Moon,
+  Rocket,
   Sparkles,
   Sun,
+  Timer,
+  WandSparkles,
   Workflow,
 } from "lucide-react";
 
@@ -30,56 +38,105 @@ interface Props {
 const features = [
   {
     icon: Database,
-    title: "Research Retrieval",
+    title: "Source-Backed Research",
     description:
-      "Collect high-signal references and structured evidence from your research pipeline.",
+      "Pull references, evidence tags, and confidence signals into a structured report pipeline.",
   },
   {
     icon: Workflow,
-    title: "AI Pipeline",
+    title: "Orchestrated AI Flow",
     description:
-      "Turn prompts into guided multi-step analysis with confidence and traceability.",
+      "Move from prompt to outline to analysis with explicit progress and clear stage boundaries.",
   },
   {
     icon: FileCheck2,
-    title: "Report Quality",
+    title: "Quality Controls",
     description:
-      "Generate executive summaries, fact checks, references, and section confidence.",
+      "Generate summaries, fact checks, verdict confidence, and reference metadata by default.",
   },
   {
     icon: MessageSquareText,
-    title: "Team Conversations",
+    title: "Persistent Chat Context",
     description:
-      "Keep context in persistent chat threads linked to your research work.",
+      "Keep follow-up questions and revisions tied to each research flow in one thread.",
   },
   {
     icon: FilePenLine,
-    title: "Human Text Studio",
+    title: "Human Writing Pass",
     description:
-      "Rewrite rough drafts into natural copy with a focused humanizing pass.",
+      "Polish generated output so final copy reads like a thoughtful human draft.",
+  },
+  {
+    icon: Lock,
+    title: "Usage + Access Control",
+    description:
+      "Built-in token control, subscription checks, and API safety for production usage.",
   },
 ];
 
 const heroStats = [
-  { label: "Research modes", value: "Topic + claim" },
-  { label: "Writing", value: "Humanizer studio" },
-  { label: "Delivery", value: "Chat + export" },
+  { label: "Avg report speed", value: "< 40 sec" },
+  { label: "Source confidence", value: "Structured" },
+  { label: "Writing finish", value: "Humanized" },
+  { label: "Deploy ready", value: "API-first" },
 ];
 
-const productHighlights = [
+const productFlow = [
   {
-    title: "Research flow",
+    icon: Globe,
+    title: "Capture context",
+    description: "Start with a topic or claim and define depth + output style.",
+  },
+  {
+    icon: FileBarChart,
+    title: "Generate analysis",
     description:
-      "Build a report from sources, confidence, and evidence in one path.",
+      "Build outline, report body, references, and confidence markers in one run.",
   },
   {
-    title: "Humanizer",
-    description: "Rewrite rough drafts into natural, publication-ready copy.",
+    icon: WandSparkles,
+    title: "Humanize final draft",
+    description:
+      "Apply a writing pass that keeps meaning intact but sounds naturally authored.",
   },
   {
-    title: "Team chat",
+    icon: Rocket,
+    title: "Ship output",
+    description:
+      "Export, share with teams, and continue iterations in linked chat.",
+  },
+];
+
+const trustSignals = [
+  { icon: Activity, label: "Resilient retries", value: "429/5xx aware" },
+  { icon: Timer, label: "Rate-limited safely", value: "Retry-After honored" },
+  { icon: CheckCircle2, label: "Schema-aware JSON", value: "Repair + parse" },
+];
+
+const bentoCards = [
+  {
+    title: "Analyst cockpit",
+    description:
+      "A command center for topic research, claim checks, and confidence scoring.",
+    span: "lg:col-span-2",
+  },
+  {
+    title: "Human text editor",
+    description:
+      "Transform robotic language into natural writing without losing data.",
+    span: "",
+  },
+  {
+    title: "Threaded decisions",
     description:
       "Keep follow-up decisions and revisions linked to each project.",
+    span: "",
+  },
+  {
+    title: "Export-ready outputs",
+    description:
+      "Move from draft to markdown, json, and pdf exports with one workflow.",
+    span: "lg:col-span-2",
   },
 ];
 
@@ -215,48 +272,48 @@ export default function HomeClient({ user }: Props) {
         </div>
       </nav>
 
-      <section className="relative overflow-hidden py-18 sm:py-24 lg:py-28">
+      <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:px-8">
-          <div className="rise-in space-y-7">
+          <div className="rise-in space-y-8">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-primary">
                 <Sparkles className="mr-2 h-3.5 w-3.5" />
-                AI Research Software
+                Modern Research Platform
               </span>
               <span className="inline-flex items-center rounded-full border border-border/70 bg-card/70 px-3 py-1 text-xs text-muted-foreground">
-                Built for real workflows
+                Built for product teams
               </span>
             </div>
 
             <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-              One workspace for research, rewriting, and team decisions.
+              Design smarter insights, not just longer reports.
             </h1>
 
             <p className="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-              ResearchAgent combines retrieval, reasoning, report generation,
-              humanized writing, and chat into one polished product experience
-              your team can use every day.
+              ResearchAgent combines structured analysis, source-backed
+              reasoning, and human-like writing into a polished interface your
+              team can trust for daily decision-making.
             </p>
 
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg" className="shadow-lg shadow-primary/25">
                 <Link href="/research" className="gap-2">
-                  Start Research
+                  Start New Research
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/humanizer">Humanize Text</Link>
+                <Link href="/humanizer">Open Humanizer</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/chat">Open AI Chat</Link>
+                <Link href="/chat">Ask in Chat</Link>
               </Button>
               <Button asChild size="lg" variant="ghost">
                 <Link href="/price">Pricing</Link>
               </Button>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {heroStats.map((item) => (
                 <div
                   key={item.label}
@@ -271,18 +328,6 @@ export default function HomeClient({ user }: Props) {
                 </div>
               ))}
             </div>
-
-            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <span className="rounded-full border border-border/60 bg-card/70 px-3 py-1">
-                Premium visual system
-              </span>
-              <span className="rounded-full border border-border/60 bg-card/70 px-3 py-1">
-                Mobile-friendly navigation
-              </span>
-              <span className="rounded-full border border-border/60 bg-card/70 px-3 py-1">
-                Clearer product storytelling
-              </span>
-            </div>
           </div>
 
           <div
@@ -295,39 +340,43 @@ export default function HomeClient({ user }: Props) {
               style={{ transform: orbitTransform }}
             >
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Product snapshot</p>
+                <p className="text-sm font-semibold">Live workflow board</p>
                 <Layers className="h-4 w-4 text-muted-foreground" />
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                {heroStats.map((item) => (
+              <div className="mt-5 space-y-3">
+                {productFlow.map((step, index) => (
                   <div
-                    key={item.label}
+                    key={step.title}
                     className="rounded-2xl border border-border/70 bg-background/60 p-4"
                   >
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      {item.label}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        0{index + 1}
+                      </p>
+                      <step.icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="mt-2 text-sm font-semibold">{step.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      {step.description}
                     </p>
-                    <p className="mt-2 text-sm font-medium">{item.value}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 space-y-3">
-                {productHighlights.map((item, index) => (
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {trustSignals.map((item) => (
                   <div
-                    key={item.title}
+                    key={item.label}
                     className="rounded-2xl border border-border/70 bg-background/60 p-4"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        0{index + 1}
+                      <item.icon className="h-4 w-4 text-primary" />
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        {item.label}
                       </p>
-                      <p className="text-sm font-semibold">{item.title}</p>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {item.description}
-                    </p>
+                    <p className="mt-2 text-sm font-medium">{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -340,14 +389,15 @@ export default function HomeClient({ user }: Props) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Everything your software needs to scale research
+              Purpose-built modules for modern research teams
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-              Use these modules together as one cohesive research product.
+              Every block is designed to work independently and as a connected
+              system.
             </p>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
               <Card
                 key={feature.title}
@@ -372,17 +422,52 @@ export default function HomeClient({ user }: Props) {
         </div>
       </section>
 
+      <section className="border-t border-border/60 py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10">
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              Product experience, laid out as a visual system
+            </h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              A bento layout that maps your full experience from analysis to
+              final delivery.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {bentoCards.map((item, index) => (
+              <Card
+                key={item.title}
+                className={`glass-panel rounded-3xl p-6 transition duration-300 hover:-translate-y-1 ${item.span} ${
+                  index % 2 === 0 ? "rise-in" : "rise-in rise-in-delay-1"
+                }`}
+              >
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  0{index + 1}
+                </p>
+                <h3 className="mt-3 text-xl font-semibold tracking-tight">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                  {item.description}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="border-t border-border/60 py-18 sm:py-22">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Card className="glass-panel rise-in rounded-3xl p-8 sm:p-10">
             <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
               <div>
                 <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-                  Make this your team’s default research operating system.
+                  Ready to launch a modern research UI in production?
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-8 text-muted-foreground sm:text-base">
-                  Start with one research request, validate with chat, and ship
-                  export-ready output to clients or internal stakeholders.
+                  Start from one query, validate confidence in context, and
+                  publish a human-ready output your clients can trust.
                 </p>
               </div>
 
