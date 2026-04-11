@@ -5,30 +5,28 @@ import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 import { useTheme } from "next-themes";
 import { createClient } from "@/utils/supabase/client";
-import { useMemo, useState, type MouseEvent } from "react";
+import { useMemo } from "react";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  Activity,
   ArrowRight,
   Brain,
-  CheckCircle2,
+  ChartNoAxesCombined,
   Database,
-  FileBarChart,
-  FileCheck2,
+  FileBarChart2,
   FilePenLine,
   Globe,
-  Layers,
+  LibraryBig,
   Lock,
   MessageSquareText,
   Moon,
+  NotebookText,
   Rocket,
+  ShieldCheck,
   Sparkles,
   Sun,
-  Timer,
-  WandSparkles,
-  Workflow,
+  Waypoints,
 } from "lucide-react";
 
 interface Props {
@@ -37,105 +35,106 @@ interface Props {
 
 const features = [
   {
-    icon: Database,
-    title: "Source-Backed Research",
+    icon: LibraryBig,
+    title: "Evidence-First Research",
     description:
-      "Pull references, evidence tags, and confidence signals into a structured report pipeline.",
+      "Every report includes references, confidence signals, and structured context so teams can trust what they read.",
   },
   {
-    icon: Workflow,
-    title: "Orchestrated AI Flow",
+    icon: Waypoints,
+    title: "Guided Workflow",
     description:
-      "Move from prompt to outline to analysis with explicit progress and clear stage boundaries.",
+      "Move from query to outline to analysis with clear stages, status visibility, and predictable outputs.",
   },
   {
-    icon: FileCheck2,
-    title: "Quality Controls",
+    icon: ShieldCheck,
+    title: "Built-In Quality Checks",
     description:
-      "Generate summaries, fact checks, verdict confidence, and reference metadata by default.",
+      "Fact checks, confidence tags, and consistency checks are included by default in each run.",
   },
   {
     icon: MessageSquareText,
-    title: "Persistent Chat Context",
+    title: "Threaded Conversations",
     description:
-      "Keep follow-up questions and revisions tied to each research flow in one thread.",
+      "Keep follow-up questions and decisions linked to each research item so context is never lost.",
   },
   {
     icon: FilePenLine,
-    title: "Human Writing Pass",
+    title: "Human Tone Output",
     description:
-      "Polish generated output so final copy reads like a thoughtful human draft.",
+      "Transform robotic language into clear, persuasive writing while preserving facts and intent.",
   },
   {
     icon: Lock,
-    title: "Usage + Access Control",
+    title: "Secure By Default",
     description:
-      "Built-in token control, subscription checks, and API safety for production usage.",
+      "Production-safe access controls and usage gates help protect APIs and control operating cost.",
   },
 ];
 
 const heroStats = [
-  { label: "Avg report speed", value: "< 40 sec" },
-  { label: "Source confidence", value: "Structured" },
-  { label: "Writing finish", value: "Humanized" },
-  { label: "Deploy ready", value: "API-first" },
+  { label: "Report turnaround", value: "Around 40 sec" },
+  { label: "Evidence handling", value: "Structured + tagged" },
+  { label: "Readability mode", value: "Human tone" },
+  { label: "Team adoption", value: "Dashboard + chat" },
 ];
 
 const productFlow = [
   {
     icon: Globe,
-    title: "Capture context",
-    description: "Start with a topic or claim and define depth + output style.",
+    title: "Frame the question",
+    description:
+      "Start with a topic or claim, then set depth, tone, and expected output format.",
   },
   {
-    icon: FileBarChart,
-    title: "Generate analysis",
+    icon: Database,
+    title: "Collect and synthesize",
     description:
-      "Build outline, report body, references, and confidence markers in one run.",
+      "Generate outline, analysis, and references in one connected pipeline with clear traceability.",
   },
   {
-    icon: WandSparkles,
-    title: "Humanize final draft",
+    icon: NotebookText,
+    title: "Polish for readability",
     description:
-      "Apply a writing pass that keeps meaning intact but sounds naturally authored.",
+      "Apply human-style phrasing and preserve key facts so stakeholders can read quickly and decide faster.",
   },
   {
     icon: Rocket,
-    title: "Ship output",
+    title: "Share and iterate",
     description:
-      "Export, share with teams, and continue iterations in linked chat.",
+      "Export results, collaborate in chat, and continue improving drafts without losing context.",
   },
 ];
 
-const trustSignals = [
-  { icon: Activity, label: "Resilient retries", value: "429/5xx aware" },
-  { icon: Timer, label: "Rate-limited safely", value: "Retry-After honored" },
-  { icon: CheckCircle2, label: "Schema-aware JSON", value: "Repair + parse" },
+const readingPillars = [
+  "High contrast color system for easy scanning",
+  "Consistent heading scale for faster comprehension",
+  "Comfortable line-height to reduce reading fatigue",
 ];
 
 const bentoCards = [
   {
-    title: "Analyst cockpit",
+    title: "Research Control Center",
     description:
-      "A command center for topic research, claim checks, and confidence scoring.",
+      "A focused command view for deep research, claim verification, and confidence scoring.",
     span: "lg:col-span-2",
   },
   {
-    title: "Human text editor",
+    title: "Readable Writing Layer",
     description:
-      "Transform robotic language into natural writing without losing data.",
+      "Convert technical model output into human-friendly language that remains accurate.",
     span: "",
   },
   {
-    title: "Threaded decisions",
+    title: "Conversation Memory",
     description:
-      "Keep follow-up decisions and revisions linked to each project.",
+      "Preserve decisions, revisions, and rationale in one place for every research topic.",
     span: "",
   },
   {
-    title: "Export-ready outputs",
+    title: "Delivery-Ready Exports",
     description:
-      "Move from draft to markdown, json, and pdf exports with one workflow.",
+      "Generate structured exports for reports, handoffs, and stakeholder updates.",
     span: "lg:col-span-2",
   },
 ];
@@ -144,10 +143,6 @@ export default function HomeClient({ user }: Props) {
   const { resolvedTheme, setTheme } = useTheme();
   const supabase = createClient();
   const router = useRouter();
-
-  const [orbitTransform, setOrbitTransform] = useState(
-    "perspective(1500px) rotateX(5deg) rotateY(-8deg) translateZ(0)",
-  );
 
   const mobileLinks = useMemo(
     () =>
@@ -175,24 +170,6 @@ export default function HomeClient({ user }: Props) {
     setTheme(nextTheme);
   };
 
-  const onOrbitMove = (event: MouseEvent<HTMLDivElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / bounds.width;
-    const y = (event.clientY - bounds.top) / bounds.height;
-    const rotateY = (x - 0.5) * 14;
-    const rotateX = (0.5 - y) * 10;
-
-    setOrbitTransform(
-      `perspective(1500px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(0)`,
-    );
-  };
-
-  const onOrbitLeave = () => {
-    setOrbitTransform(
-      "perspective(1500px) rotateX(5deg) rotateY(-8deg) translateZ(0)",
-    );
-  };
-
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
 
@@ -206,14 +183,14 @@ export default function HomeClient({ user }: Props) {
   };
 
   return (
-    <div className="home-surface min-h-screen bg-background text-foreground">
-      <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+    <div className="home-surface editorial-grid min-h-screen bg-background text-foreground">
+      <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent text-primary-foreground shadow-md shadow-primary/30">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-accent text-primary-foreground shadow-md shadow-primary/30">
               <Brain className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">
+            <span className="text-lg font-semibold tracking-tight sm:text-xl">
               ResearchAgent
             </span>
           </div>
@@ -272,33 +249,33 @@ export default function HomeClient({ user }: Props) {
         </div>
       </nav>
 
-      <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:px-8">
+      <section className="relative overflow-hidden py-14 sm:py-18 lg:py-22">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:items-start lg:px-8">
           <div className="rise-in space-y-8">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/12 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                 <Sparkles className="mr-2 h-3.5 w-3.5" />
-                Modern Research Platform
+                Readability-First Interface
               </span>
-              <span className="inline-flex items-center rounded-full border border-border/70 bg-card/70 px-3 py-1 text-xs text-muted-foreground">
-                Built for product teams
+              <span className="inline-flex items-center rounded-full border border-border/80 bg-card/80 px-4 py-1.5 text-xs font-medium text-foreground/75">
+                Designed for fast decision teams
               </span>
             </div>
 
-            <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-              Design smarter insights, not just longer reports.
+            <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+              A sharper UI for research people can actually read.
             </h1>
 
-            <p className="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-              ResearchAgent combines structured analysis, source-backed
-              reasoning, and human-like writing into a polished interface your
-              team can trust for daily decision-making.
+            <p className="text-readable max-w-2xl text-base leading-8 sm:text-lg">
+              This redesign emphasizes clarity, contrast, and hierarchy. Your
+              team gets structured insight, human-friendly writing, and a visual
+              rhythm that makes long research output easy to scan.
             </p>
 
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="shadow-lg shadow-primary/25">
+              <Button asChild size="lg" className="shadow-lg shadow-primary/30">
                 <Link href="/research" className="gap-2">
-                  Start New Research
+                  Start Research
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -309,7 +286,7 @@ export default function HomeClient({ user }: Props) {
                 <Link href="/chat">Ask in Chat</Link>
               </Button>
               <Button asChild size="lg" variant="ghost">
-                <Link href="/price">Pricing</Link>
+                <Link href="/dashboard">Dashboard</Link>
               </Button>
             </div>
 
@@ -317,12 +294,12 @@ export default function HomeClient({ user }: Props) {
               {heroStats.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm backdrop-blur"
+                  className="rounded-2xl border border-border/80 bg-card/85 p-4 shadow-sm backdrop-blur"
                 >
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="text-xs uppercase tracking-[0.18em] text-foreground/65">
                     {item.label}
                   </p>
-                  <p className="mt-2 text-sm font-medium text-foreground/90">
+                  <p className="mt-2 text-sm font-semibold text-foreground/95">
                     {item.value}
                   </p>
                 </div>
@@ -330,58 +307,48 @@ export default function HomeClient({ user }: Props) {
             </div>
           </div>
 
-          <div
-            className="relative mx-auto hidden w-full max-w-xl lg:block"
-            onMouseMove={onOrbitMove}
-            onMouseLeave={onOrbitLeave}
-          >
-            <Card
-              className="glass-panel tilt-card parallax-card float-soft rounded-3xl p-6"
-              style={{ transform: orbitTransform }}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Live workflow board</p>
-                <Layers className="h-4 w-4 text-muted-foreground" />
-              </div>
+          <Card className="glass-panel rise-in rise-in-delay-1 rounded-3xl border-border/80 p-6 sm:p-8">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold">
+                How the platform reads better
+              </p>
+              <ChartNoAxesCombined className="h-4 w-4 text-primary" />
+            </div>
 
-              <div className="mt-5 space-y-3">
-                {productFlow.map((step, index) => (
-                  <div
-                    key={step.title}
-                    className="rounded-2xl border border-border/70 bg-background/60 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        0{index + 1}
-                      </p>
-                      <step.icon className="h-4 w-4 text-primary" />
+            <div className="mt-5 space-y-3">
+              {productFlow.map((step, index) => (
+                <div
+                  key={step.title}
+                  className="rounded-2xl border border-border/75 bg-background/65 p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary/15 px-2 text-xs font-semibold text-primary">
+                      {index + 1}
                     </div>
-                    <p className="mt-2 text-sm font-semibold">{step.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      {step.description}
-                    </p>
+                    <step.icon className="h-4 w-4 text-primary" />
                   </div>
-                ))}
-              </div>
+                  <p className="mt-2 text-base font-semibold">{step.title}</p>
+                  <p className="text-readable mt-1 text-sm leading-6">
+                    {step.description}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {trustSignals.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-2xl border border-border/70 bg-background/60 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <item.icon className="h-4 w-4 text-primary" />
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                        {item.label}
-                      </p>
-                    </div>
-                    <p className="mt-2 text-sm font-medium">{item.value}</p>
-                  </div>
+            <div className="mt-5 rounded-2xl border border-border/75 bg-background/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground/65">
+                Reading Principles
+              </p>
+              <ul className="mt-3 space-y-2 text-sm text-foreground/85">
+                {readingPillars.map((pillar) => (
+                  <li key={pillar} className="flex items-start gap-2">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-accent" />
+                    <span>{pillar}</span>
+                  </li>
                 ))}
-              </div>
-            </Card>
-          </div>
+              </ul>
+            </div>
+          </Card>
         </div>
       </section>
 
@@ -389,11 +356,11 @@ export default function HomeClient({ user }: Props) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Purpose-built modules for modern research teams
+              Purpose-built modules with clearer text visibility
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-              Every block is designed to work independently and as a connected
-              system.
+            <p className="text-readable mx-auto mt-3 max-w-2xl">
+              Each module keeps information readable at a glance and detailed on
+              demand.
             </p>
           </div>
 
@@ -413,7 +380,7 @@ export default function HomeClient({ user }: Props) {
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="mt-5 text-lg font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                <p className="text-readable mt-2 text-sm leading-7">
                   {feature.description}
                 </p>
               </Card>
@@ -426,11 +393,11 @@ export default function HomeClient({ user }: Props) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Product experience, laid out as a visual system
+              The product flow as a visual story
             </h2>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              A bento layout that maps your full experience from analysis to
-              final delivery.
+            <p className="text-readable mt-3 max-w-2xl">
+              This layout helps users understand where they are, what happened,
+              and what comes next.
             </p>
           </div>
 
@@ -448,7 +415,7 @@ export default function HomeClient({ user }: Props) {
                 <h3 className="mt-3 text-xl font-semibold tracking-tight">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                <p className="text-readable mt-2 text-sm leading-7">
                   {item.description}
                 </p>
               </Card>
@@ -457,17 +424,18 @@ export default function HomeClient({ user }: Props) {
         </div>
       </section>
 
-      <section className="border-t border-border/60 py-18 sm:py-22">
+      <section className="border-t border-border/60 py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Card className="glass-panel rise-in rounded-3xl p-8 sm:p-10">
+          <Card className="glass-panel rise-in rounded-3xl border-border/80 p-8 sm:p-10">
             <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
               <div>
                 <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-                  Ready to launch a modern research UI in production?
+                  Ready to launch your new research interface?
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-8 text-muted-foreground sm:text-base">
-                  Start from one query, validate confidence in context, and
-                  publish a human-ready output your clients can trust.
+                <p className="text-readable mt-3 max-w-2xl text-sm leading-8 sm:text-base">
+                  Use high-clarity cards, readable long-form text, and a cleaner
+                  hierarchy to improve trust and comprehension across the whole
+                  product.
                 </p>
               </div>
 
@@ -486,7 +454,7 @@ export default function HomeClient({ user }: Props) {
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="ghost">
-                  <Link href="/humanizer">Open Humanizer</Link>
+                  <Link href="/price">View Pricing</Link>
                 </Button>
               </div>
             </div>
@@ -494,8 +462,8 @@ export default function HomeClient({ user }: Props) {
         </div>
       </section>
 
-      <footer className="border-t border-border/60 py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
+      <footer className="border-t border-border/70 py-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-sm text-foreground/70 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary" />
             ResearchAgent

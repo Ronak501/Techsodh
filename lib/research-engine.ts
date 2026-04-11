@@ -59,14 +59,6 @@ type GeminiResult = {
   finishReason?: string
 }
 
-type RetryContext = {
-  attempt: number
-  totalAttempts: number
-  statusCode?: number
-  retryAfter?: string
-  finishReason?: string
-}
-
 export function buildCacheKey(query: string) {
   const tokens = query
     .toLowerCase()

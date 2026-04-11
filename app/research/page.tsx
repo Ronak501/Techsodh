@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ResearchInterface } from "@/components/research-interface";
 import { ResearchSummary } from "@/components/research-summary";
-import { ArrowLeft, FilePenLine } from "lucide-react";
+import { ArrowLeft, FilePenLine, NotebookText, Sparkles } from "lucide-react";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import type { ResearchSummaryData } from "@/lib/research-types";
 
@@ -21,7 +22,7 @@ export default function ResearchPage() {
   ];
 
   return (
-    <div className="research-surface min-h-screen bg-background">
+    <div className="research-surface editorial-grid min-h-screen bg-background text-foreground">
       {/* Header */}
       <div className="border-b border-border/60 bg-linear-to-r from-card via-card/92 to-muted/50">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -62,7 +63,7 @@ export default function ResearchPage() {
                   <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl">
                     New Research
                   </h1>
-                  <p className="max-w-xl text-sm text-muted-foreground sm:text-base">
+                  <p className="text-readable max-w-xl text-sm sm:text-base">
                     Choose a template to shape the report before you search.
                     Topic research builds structured reviews, while claim
                     verification adds verdicts, fact checks, and evidence
@@ -98,7 +99,35 @@ export default function ResearchPage() {
           </div>
 
           <div className="lg:col-span-1 lg:sticky lg:top-6 lg:self-start">
-            {summaryData && <ResearchSummary summaryData={summaryData} />}
+            {summaryData ? (
+              <ResearchSummary summaryData={summaryData} />
+            ) : (
+              <Card className="glass-panel rise-in rounded-3xl border-border/70 p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Reading preview
+                  </p>
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="mt-3 text-xl font-semibold tracking-tight">
+                  Your summary will appear here
+                </h2>
+                <p className="text-readable mt-2 text-sm leading-7">
+                  Run a research query to see a structured summary with clear
+                  sections, confidence markers, and export-ready insights.
+                </p>
+                <div className="mt-4 rounded-2xl border border-border/70 bg-background/60 p-4">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    <NotebookText className="h-4 w-4 text-primary" />
+                    What you get
+                  </div>
+                  <p className="text-readable mt-2 text-sm">
+                    Executive summary, key findings, references, and readable
+                    section-by-section analysis.
+                  </p>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>

@@ -224,7 +224,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="dashboard-surface min-h-screen bg-background">
+    <div className="dashboard-surface editorial-grid min-h-screen bg-background text-foreground">
       <div className="border-b border-border/60 bg-linear-to-r from-card via-card/92 to-muted/50">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -253,9 +253,9 @@ export default function DashboardPage() {
                 <h1 className="text-3xl font-bold tracking-tight text-balance">
                   Dashboard
                 </h1>
-                <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+                <p className="text-readable max-w-2xl text-sm sm:text-base">
                   Track every research run, review outcomes, and launch new
-                  analyses from one premium workspace.
+                  analyses from one clear, high-visibility workspace.
                 </p>
               </div>
             </div>
@@ -305,7 +305,7 @@ export default function DashboardPage() {
                 <h2 className="max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
                   A command center for research, rewrite, and review.
                 </h2>
-                <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                <p className="text-readable max-w-2xl text-sm leading-7 sm:text-base">
                   Use the platform to generate reports, verify claims, humanize
                   rough text, and manage the full research workflow from one
                   place.
@@ -324,7 +324,7 @@ export default function DashboardPage() {
                     <p className="mt-2 text-sm font-semibold text-foreground">
                       {item.value}
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    <p className="text-readable mt-1 text-sm leading-6">
                       {item.detail}
                     </p>
                   </div>
@@ -353,7 +353,7 @@ export default function DashboardPage() {
                   <Bot className="h-4 w-4 text-primary" />
                   AI workflow
                 </div>
-                <p className="mt-3 text-sm text-foreground/90">
+                <p className="text-readable mt-3 text-sm">
                   Research, verify, and export with a guided pipeline.
                 </p>
               </div>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
                   <FileText className="h-4 w-4 text-primary" />
                   Reports
                 </div>
-                <p className="mt-3 text-sm text-foreground/90">
+                <p className="text-readable mt-3 text-sm">
                   Clean summaries with references, evidence, and confidence.
                 </p>
               </div>
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                   <Sparkles className="h-4 w-4 text-primary" />
                   Product value
                 </div>
-                <p className="mt-3 text-sm text-foreground/90">
+                <p className="text-readable mt-3 text-sm">
                   Built to make the software itself feel premium and fast.
                 </p>
               </div>
@@ -488,7 +488,7 @@ export default function DashboardPage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[.95fr_1.05fr]">
           <Card className="dashboard-card rounded-3xl border-border/70 bg-card/80 p-6 shadow-sm">
             <h2 className="text-lg font-semibold">Usage Overview</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="text-readable mt-2 text-sm">
               This is the operational layer behind your research software.
             </p>
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
@@ -523,7 +523,7 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-semibold">
                   Success / Failure Trend
                 </h2>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="text-readable mt-2 text-sm">
                   Last 7 days of research output.
                 </p>
               </div>
@@ -567,7 +567,7 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Recent Research</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="text-readable mt-2 text-sm">
                   Search, sort, and export your research history.
                 </p>
               </div>

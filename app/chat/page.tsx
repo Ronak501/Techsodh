@@ -8,6 +8,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import {
   ArrowRight,
@@ -147,15 +148,16 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="chat-surface flex h-screen bg-background text-foreground">
+    <div className="chat-surface editorial-grid flex h-screen bg-background text-foreground">
       <aside className="glass-panel m-3 hidden w-80 flex-col overflow-hidden rounded-3xl lg:flex">
         <div className="space-y-3 border-b border-border/60 p-4">
           <div className="flex items-center justify-between gap-2">
-            <Link href="/dashboard" className="w-full">
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background/80 py-2 text-sm transition hover:bg-accent hover:text-accent-foreground">
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </button>
+            <Link
+              href="/dashboard"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background/80 py-2 text-sm transition hover:bg-accent hover:text-accent-foreground"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
             </Link>
           </div>
 
@@ -169,11 +171,11 @@ export default function ChatPage() {
 
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
+            <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search conversations"
-              className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
+              className="h-10 rounded-xl border-input bg-background py-2 pl-9 pr-3 text-sm"
             />
           </div>
         </div>
@@ -207,7 +209,7 @@ export default function ChatPage() {
           ))}
 
           {filteredConversations.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-muted-foreground">
+            <div className="text-readable px-4 py-6 text-sm">
               No matching conversations
             </div>
           ) : null}
@@ -257,7 +259,7 @@ export default function ChatPage() {
               </Button>
               <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-primary">
                 <Sparkles className="mr-2 h-3.5 w-3.5" />
-                3D mode
+                Readability mode
               </span>
             </div>
           </div>
@@ -270,7 +272,7 @@ export default function ChatPage() {
               <h2 className="text-3xl font-semibold tracking-tight text-balance">
                 Start a new conversation with your research assistant
               </h2>
-              <p className="mx-auto max-w-xl text-muted-foreground">
+              <p className="text-readable mx-auto max-w-xl">
                 Use chat to validate findings, draft responses, and refine ideas
                 before exporting your final report.
               </p>
