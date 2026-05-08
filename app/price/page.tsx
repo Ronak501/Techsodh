@@ -68,6 +68,16 @@ declare global {
   }
 }
 
+type RazorpayCheckoutInstance = {
+  open: () => void;
+  on?: (
+    event: "payment.failed",
+    callback: (response: {
+      error?: { code?: string; description?: string; reason?: string };
+    }) => void,
+  ) => void;
+};
+
 const checkoutKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
 const plans = [
@@ -217,9 +227,9 @@ export default function PricingPage() {
         modal: {
           ondismiss: () => setLoadingPlan(null),
         },
-      });
+      }) as RazorpayCheckoutInstance;
 
-      checkout.on?.("payment.failed", (response: any) => {
+      checkout.on?.("payment.failed", (response) => {
         setCheckoutError(
           response.error?.description || "Payment failed or was cancelled",
         );
