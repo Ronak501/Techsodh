@@ -89,32 +89,37 @@ async function syncSubscription(subscriptionId: string, paymentId: string) {
 }
 
 export async function POST(request: Request) {
-  const body = await parseJsonSafely<VerifyPayload>(request)
-
-  if (!body) {
-    return safeJsonResponse(400, "Invalid JSON body")
-  }
-
-  const { razorpay_subscription_id, razorpay_payment_id, razorpay_signature } = body
-
-  if (!razorpay_subscription_id || !razorpay_payment_id || !razorpay_signature) {
-    return safeJsonResponse(400, "Missing Razorpay verification fields")
-  }
-
-  const isValid = Razorpay.validatePaymentVerification(
-    {
-      subscription_id: razorpay_subscription_id,
-      payment_id: razorpay_payment_id,
-    },
-    razorpay_signature,
-    getRazorpayKeySecret(),
-  )
-
-  if (!isValid) {
-    return safeJsonResponse(400, "Invalid Razorpay signature")
-  }
-
   try {
+    const body = await parseJsonSafely<VerifyPayload>(request)
+
+    if (!body) {
+      return safeJsonResponse(400, "Invalid JSON body")
+    }
+
+    const { razorpay_subscription_id, razorpay_payment_id, razorpay_signature } =
+      body
+
+    if (
+      !razorpay_subscription_id ||
+      !razorpay_payment_id ||
+      !razorpay_signature
+    ) {
+      return safeJsonResponse(400, "Missing Razorpay verification fields")
+    }
+
+    const isValid = Razorpay.validatePaymentVerification(
+      {
+        subscription_id: razorpay_subscription_id,
+        payment_id: razorpay_payment_id,
+      },
+      razorpay_signature,
+      getRazorpayKeySecret(),
+    )
+
+    if (!isValid) {
+      return safeJsonResponse(400, "Invalid Razorpay signature")
+    }
+
     await syncSubscription(razorpay_subscription_id, razorpay_payment_id)
     return NextResponse.json({ ok: true })
   } catch (error) {

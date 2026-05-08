@@ -1,5 +1,6 @@
 import {
   BILLING_PLANS,
+  getBillingPlanAmountPaise,
   formatBillingPeriod,
   normalizeRazorpayStatus,
   resolvePlanFromRazorpayPlanId,
@@ -10,6 +11,11 @@ describe("billing helpers", () => {
   it("exposes paid plan metadata for checkout links", () => {
     expect(BILLING_PLANS.pro.label).toBe("Pro")
     expect(BILLING_PLANS.premium.priceDisplay).toContain("₹1499")
+  })
+
+  it("returns standard checkout amounts in paise", () => {
+    expect(getBillingPlanAmountPaise("pro")).toBe(49900)
+    expect(getBillingPlanAmountPaise("premium")).toBe(149900)
   })
 
   it("normalizes Razorpay subscription states to app states", () => {

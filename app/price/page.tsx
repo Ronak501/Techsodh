@@ -5,26 +5,45 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getBillingPlanConfig, type BillingPlan } from "@/lib/billing";
+import {
+  getBillingPlanAmountPaise,
+  getBillingPlanConfig,
+  type BillingPlan,
+} from "@/lib/billing";
 
 type CheckoutResponse = {
-  ok: true;
-  keyId: string;
-  subscriptionId: string;
-  plan: BillingPlan;
-  planLabel: string;
-  description: string;
+  order_id: string;
   amount: number;
   currency: string;
-  customerEmail?: string;
-  customerName: string;
+  key_id?: string;
 };
+
+async function readJsonSafely<T>(response: Response): Promise<T | null> {
+  const contentType = response.headers.get("content-type") || "";
+  const bodyText = await response.text();
+
+  if (!bodyText.trim()) {
+    return null;
+  }
+
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(bodyText) as T;
+  } catch {
+    return null;
+  }
+}
 
 declare global {
   interface Window {
     Razorpay?: new (options: {
       key: string;
-      subscription_id: string;
+      amount: number;
+      currency: string;
+      order_id: string;
       name: string;
       description: string;
       prefill?: { name?: string; email?: string };
@@ -32,13 +51,24 @@ declare global {
       theme?: { color?: string };
       handler: (response: {
         razorpay_payment_id: string;
-        razorpay_subscription_id: string;
+        razorpay_order_id: string;
         razorpay_signature: string;
       }) => void | Promise<void>;
       modal?: { ondismiss?: () => void };
+      on?: (
+        event: "payment.failed",
+        callback: (response: {
+          error?: { code?: string; description?: string; reason?: string };
+        }) => void,
+      ) => void;
+      "payment.failed"?: (response: {
+        error?: { code?: string; description?: string; reason?: string };
+      }) => void;
     }) => { open: () => void };
   }
 }
+
+const checkoutKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
 const plans = [
   {
@@ -108,19 +138,27 @@ export default function PricingPage() {
     setLoadingPlan(plan);
 
     try {
-      const response = await fetch("/api/billing/checkout", {
+      const amount = getBillingPlanAmountPaise(plan);
+      const receipt = `${plan}_${Date.now()}`;
+
+      const response = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({
+          plan,
+          amount,
+          currency: "INR",
+          receipt,
+        }),
       });
 
-      const data = (await response.json()) as
-        | CheckoutResponse
-        | { error?: string };
+      const data = await readJsonSafely<CheckoutResponse | { error?: string }>(
+        response,
+      );
 
-      if (!response.ok || !("ok" in data)) {
+      if (!response.ok || !data || !("order_id" in data)) {
         throw new Error(
-          "error" in data && data.error
+          data && "error" in data && data.error
             ? data.error
             : "Unable to start checkout",
         );
@@ -134,37 +172,43 @@ export default function PricingPage() {
       }
 
       const planConfig = getBillingPlanConfig(plan);
+      const keyId = checkoutKeyId || data.key_id;
+
+      if (!keyId) {
+        throw new Error("Razorpay key id is missing");
+      }
+
       const checkout = new Razorpay({
-        key: data.keyId,
-        subscription_id: data.subscriptionId,
+        key: keyId,
+        amount: data.amount,
+        currency: data.currency,
+        order_id: data.order_id,
         name: "Research Agent",
-        description: `${planConfig.label} subscription`,
+        description: `${planConfig.label} plan payment`,
         prefill: {
-          name: data.customerName,
-          email: data.customerEmail,
+          name: "Research Agent user",
         },
         notes: {
           plan,
           plan_label: planConfig.label,
+          receipt,
         },
         theme: { color: "#111827" },
         handler: async (paymentResponse) => {
-          const verifyResponse = await fetch("/api/billing/verify", {
+          const verifyResponse = await fetch("/api/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              plan,
-              razorpay_subscription_id:
-                paymentResponse.razorpay_subscription_id,
+              razorpay_order_id: paymentResponse.razorpay_order_id,
               razorpay_payment_id: paymentResponse.razorpay_payment_id,
               razorpay_signature: paymentResponse.razorpay_signature,
             }),
           });
 
           if (!verifyResponse.ok) {
-            const result = (await verifyResponse.json().catch(() => null)) as {
-              error?: string;
-            } | null;
+            const result = await readJsonSafely<{ error?: string }>(
+              verifyResponse,
+            );
             throw new Error(result?.error || "Payment verification failed");
           }
 
@@ -173,6 +217,13 @@ export default function PricingPage() {
         modal: {
           ondismiss: () => setLoadingPlan(null),
         },
+      });
+
+      checkout.on?.("payment.failed", (response: any) => {
+        setCheckoutError(
+          response.error?.description || "Payment failed or was cancelled",
+        );
+        setLoadingPlan(null);
       });
 
       checkout.open();
@@ -201,7 +252,7 @@ export default function PricingPage() {
           Choose the perfect plan for your AI-powered research journey
         </p>
         <p className="mt-3 text-sm text-muted-foreground">
-          Razorpay checkout supports UPI, cards, and India-friendly subscription
+          Razorpay checkout supports UPI, cards, and India-friendly standard
           payments.
         </p>
       </div>

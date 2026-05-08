@@ -14,7 +14,6 @@ import {
   Brain,
   ChartNoAxesCombined,
   Database,
-  FileBarChart2,
   FilePenLine,
   Globe,
   LibraryBig,
@@ -213,6 +212,14 @@ export default function HomeClient({ user }: Props) {
                 <Button
                   asChild
                   size="sm"
+                  variant="ghost"
+                  className="hidden sm:inline-flex"
+                >
+                  <Link href="/price">Pricing</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
                   variant="outline"
                   className="hidden sm:inline-flex"
                 >
@@ -232,6 +239,14 @@ export default function HomeClient({ user }: Props) {
               </>
             ) : (
               <>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="ghost"
+                  className="hidden sm:inline-flex"
+                >
+                  <Link href="/price">Pricing</Link>
+                </Button>
                 <Button
                   asChild
                   size="sm"

@@ -31,6 +31,25 @@ export function getBillingPlanConfig(plan: BillingPlan) {
   return BILLING_PLANS[plan]
 }
 
+export function getBillingPlanAmountPaise(plan: BillingPlan) {
+  switch (plan) {
+    case "pro":
+      return 49900
+    case "premium":
+      return 149900
+  }
+}
+
+export function getPublicRazorpayKeyId() {
+  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID
+
+  if (!keyId) {
+    throw new Error("NEXT_PUBLIC_RAZORPAY_KEY_ID is required for Razorpay checkout")
+  }
+
+  return keyId
+}
+
 export function getRazorpayPlanId(plan: BillingPlan) {
   const planId = process.env[BILLING_PLANS[plan].razorpayPlanIdEnv]
 

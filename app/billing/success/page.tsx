@@ -44,14 +44,14 @@ export default async function BillingSuccessPage({
         <Card className="border-border/70 bg-card/80 p-8 shadow-lg">
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant="secondary">Payment received</Badge>
-            <Badge variant="outline">Razorpay checkout</Badge>
+            <Badge variant="outline">Razorpay standard checkout</Badge>
           </div>
           <h1 className="mt-4 text-4xl font-bold tracking-tight text-balance">
-            Your upgrade is being activated
+            Your payment was verified
           </h1>
           <p className="mt-3 max-w-2xl text-muted-foreground">
-            The checkout completed successfully. Razorpay will sync your
-            subscription into the app automatically.
+            The checkout completed successfully and your access is being updated
+            in the app.
           </p>
 
           <div className="mt-6 grid gap-3 rounded-xl border border-border/70 bg-muted/30 p-4 text-sm sm:grid-cols-2">
