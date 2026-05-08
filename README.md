@@ -1,69 +1,23 @@
-# Multi-Agent Research Platform
+# Research Agent — Multi-Agent Research Platform
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Research Agent is a production-ready multi-agent research platform that helps teams and individual researchers run structured, iterative AI research workflows. It provides an integrated experience for prompt-driven exploration, multi-step agent orchestration, and subscription-based access control — all within a polished web interface.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/ronak501s-projects/v0-multi-agent-research-platform)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/qa3WcjzEs1A)
+Core capabilities
 
-## Overview
+- Multi-agent research pipelines: orchestrate multiple specialized agents to collaborate on long-form research tasks and investigative workflows.
+- Persistent context and memory: keep session context and user preferences across sessions to produce consistent, reproducible research outputs.
+- Token-gated subscription tiers: enforce usage limits and subscription-based features (Free / Pro / Premium) with billing integration.
+- AI-first tooling: built-in PDF import/export, citation tracking, and multi-format export to support research dissemination.
+- Extensible integrations: architected to integrate with Supabase for storage/auth, Razorpay for billing, and pluggable LLM backends.
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+Intended users
 
-## Deployment
+- Researchers, academics, and product teams who need repeatable, agent-driven analysis pipelines.
+- Data scientists and engineers building reproducible AI experiments and reports.
+- Small teams looking for a hosted, subscription-driven research assistant with export-ready outputs.
 
-Your project is live at:
+Production status
 
-**[https://vercel.com/ronak501s-projects/v0-multi-agent-research-platform](https://vercel.com/ronak501s-projects/v0-multi-agent-research-platform)**
+This repository represents the final production artifact of the Research Agent application: a complete, deployable web app with authentication, billing, and the core agent orchestration features. It is intended to be used as the canonical source for the running service.
 
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.app/chat/qa3WcjzEs1A](https://v0.app/chat/qa3WcjzEs1A)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
-
-## Local Development
-
-This repository is standardized on npm.
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Run the app locally:
-
-```bash
-npm run dev
-```
-
-Do not use pnpm or yarn in this repository.
-
-## Payments
-
-This project now includes Razorpay subscriptions for the Pro and Premium plans.
-
-Required environment variables:
-
-- `RAZORPAY_KEY_ID`
-- `RAZORPAY_KEY_SECRET`
-- `RAZORPAY_WEBHOOK_SECRET`
-- `RAZORPAY_PRO_PLAN_ID`
-- `RAZORPAY_PREMIUM_PLAN_ID`
-- `NEXT_PUBLIC_APP_URL`
-
-Setup flow:
-
-1. Create the two recurring plans in Razorpay.
-1. Add the env vars above in your local `.env.local` and your hosting provider.
-1. Run the Supabase migration in `supabase/migrations/20260508000100_add_razorpay_subscription_columns.sql`.
-1. Point the Razorpay webhook to `POST /api/billing/webhook`.
-1. Open `/price` and click a paid plan to test the checkout flow.
+If you need a shorter summary for display or press, use: "Research Agent — multi-agent, subscription-driven research platform for teams and individuals." 
