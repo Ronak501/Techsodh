@@ -46,3 +46,24 @@ npm run dev
 ```
 
 Do not use pnpm or yarn in this repository.
+
+## Payments
+
+This project now includes Razorpay subscriptions for the Pro and Premium plans.
+
+Required environment variables:
+
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
+- `RAZORPAY_PRO_PLAN_ID`
+- `RAZORPAY_PREMIUM_PLAN_ID`
+- `NEXT_PUBLIC_APP_URL`
+
+Setup flow:
+
+1. Create the two recurring plans in Razorpay.
+1. Add the env vars above in your local `.env.local` and your hosting provider.
+1. Run the Supabase migration in `supabase/migrations/20260508000100_add_razorpay_subscription_columns.sql`.
+1. Point the Razorpay webhook to `POST /api/billing/webhook`.
+1. Open `/price` and click a paid plan to test the checkout flow.
