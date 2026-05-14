@@ -509,23 +509,17 @@ export function ResearchSummary({
           )}
         </div>
       </Card>
-
-      <Card className="rounded-2xl border-border/70 p-5 sm:p-6">
-        <h3 className="text-lg font-semibold">Research Outline</h3>
-        <div className="mt-4 space-y-3">
-          {(outline?.sections ?? []).map((section, index: number) => (
-            <article
-              key={`outline-${index}`}
-              className="report-copy rounded-xl border border-border/60 bg-muted/30 p-4"
-            >
-              <h4 className="text-sm font-semibold">{section.heading}</h4>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {section.description}
-              </p>
-            </article>
-          ))}
-        </div>
-      </Card>
+      {/* Removed duplicate Research Outline card (outline rendered earlier).
+          If report sections are missing but outline exists, show a hint. */}
+      {outlineSections.length && executiveParagraphs.length === 0 ? (
+        <Card className="rounded-2xl border-border/70 p-5 sm:p-6">
+          <p className="text-sm text-muted-foreground">
+            An outline is available but the executive summary is empty — the
+            pipeline may have truncated or omitted those sections. Try
+            regenerating the report or check server logs for model output.
+          </p>
+        </Card>
+      ) : null}
     </div>
   );
 }

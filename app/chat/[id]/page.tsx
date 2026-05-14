@@ -13,6 +13,7 @@ import rehypeRaw from "rehype-raw";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
+import { chatNavigation } from "@/lib/navigation";
 import {
   ArrowRight,
   FilePenLine,
@@ -321,16 +322,7 @@ export default function ChatPage() {
               <h1 className="text-lg font-semibold">AI Chat Assistant</h1>
             </div>
             <div className="flex items-center gap-2">
-              <MobileNavDrawer
-                title="Chat Navigation"
-                items={[
-                  { href: "/", label: "Home" },
-                  { href: "/dashboard", label: "Dashboard" },
-                  { href: "/research", label: "Research" },
-                  { href: "/humanizer", label: "Humanizer" },
-                  { href: "/chat", label: "Chat" },
-                ]}
-              />
+              <MobileNavDrawer title="Chat Navigation" items={chatNavigation} />
               <Button
                 asChild
                 variant="outline"

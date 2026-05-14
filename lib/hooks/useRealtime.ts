@@ -12,6 +12,12 @@ export function useRealtimeCollaborators(researchId: string) {
   useEffect(() => {
     const supabase = supabaseRef.current
 
+    if (!researchId) {
+      setCollaborators([])
+      setIsLoading(false)
+      return
+    }
+
     // Fetch initial collaborators
     const fetchCollaborators = async () => {
       const response = await fetch(`/api/research/${researchId}/collaborators`)

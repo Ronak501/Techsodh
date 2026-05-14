@@ -8,6 +8,7 @@ import { ResearchInterface } from "@/components/research-interface";
 import { ResearchSummary } from "@/components/research-summary";
 import { ArrowLeft, FilePenLine, NotebookText, Sparkles } from "lucide-react";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
+import { researchNavigation } from "@/lib/navigation";
 import type { ResearchSummaryData } from "@/lib/research-types";
 
 export default function ResearchPage() {
@@ -30,13 +31,7 @@ export default function ResearchPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <MobileNavDrawer
                 title="Research Navigation"
-                items={[
-                  { href: "/", label: "Home" },
-                  { href: "/dashboard", label: "Dashboard" },
-                  { href: "/chat", label: "Chat" },
-                  { href: "/humanizer", label: "Humanizer" },
-                  { href: "/research", label: "Research" },
-                ]}
+                items={researchNavigation}
               />
               <Button asChild variant="ghost" size="sm">
                 <Link href="/dashboard" className="gap-2">

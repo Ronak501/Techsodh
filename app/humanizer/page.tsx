@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
+import { humanizerNavigation } from "@/lib/navigation";
 
 const toneOptions = [
   {
@@ -134,14 +135,7 @@ export default function HumanizerPage() {
           <div className="flex items-center gap-3">
             <MobileNavDrawer
               title="Humanizer Navigation"
-              items={[
-                { href: "/", label: "Home" },
-                { href: "/dashboard", label: "Dashboard" },
-                { href: "/research", label: "Research" },
-                { href: "/chat", label: "Chat" },
-                { href: "/humanizer", label: "Humanizer" },
-                { href: "/price", label: "Pricing" },
-              ]}
+              items={humanizerNavigation}
             />
             <Button asChild variant="ghost" size="sm" className="gap-2">
               <Link href="/dashboard" className="gap-2">

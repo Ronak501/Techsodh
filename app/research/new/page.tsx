@@ -6,6 +6,7 @@ import { ArrowLeft, FilePenLine, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResearchInterface } from "@/components/research-interface";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
+import { researchNavigation } from "@/lib/navigation";
 
 const launchSignals = [
   "Template-guided flow",
@@ -24,13 +25,7 @@ export default function NewResearchPage() {
             <div className="flex flex-col gap-4">
               <MobileNavDrawer
                 title="Research Navigation"
-                items={[
-                  { href: "/", label: "Home" },
-                  { href: "/dashboard", label: "Dashboard" },
-                  { href: "/research", label: "Research" },
-                  { href: "/humanizer", label: "Humanizer" },
-                  { href: "/chat", label: "Chat" },
-                ]}
+                items={researchNavigation}
               />
               <Button asChild variant="ghost" size="sm" className="w-fit">
                 <Link href="/research" className="gap-2">
