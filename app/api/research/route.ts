@@ -183,7 +183,6 @@ export async function POST(request: Request) {
             model_name: settings.model_name,
             outline: payload.outline,
             report: payload.report,
-            humanized_report: payload.humanized_report || payload.report,
             prompt_tokens: Number(payload.usage?.prompt_tokens || 0),
             completion_tokens: Number(payload.usage?.completion_tokens || 0),
             estimated_cost_usd: Number(payload.usage?.estimated_cost_usd || 0),
@@ -208,7 +207,7 @@ export async function POST(request: Request) {
         settings,
         outline: payload.outline,
         report: payload.report,
-        humanized_report: payload.humanized_report,
+        humanized_report: payload.humanized_report || payload.report,
         humanization_used: payload.humanization_used,
         usage: payload.usage || {
           prompt_tokens: 0,
@@ -220,31 +219,6 @@ export async function POST(request: Request) {
     }
 
     const startedAt = Date.now()
-
-    const { data: createdReport, error: createError } = await supabase
-      .from("research_reports")
-      .insert([
-        {
-          user_id: userId,
-          query,
-          status: "in_progress",
-          research_mode: mode,
-          template,
-          output_style: settings.output_style,
-          depth: settings.depth,
-          model_name: settings.model_name,
-          started_at: new Date(startedAt).toISOString(),
-          cache_key: cacheKey,
-        },
-      ])
-      .select("id")
-      .single()
-
-    if (createError || !createdReport) {
-      throw new Error("Failed to create research job")
-    }
-
-    researchId = createdReport.id
 
     const pipeline = await runResearchPipeline(
       {
@@ -268,28 +242,50 @@ export async function POST(request: Request) {
       console.error("Failed to record research token usage", error)
     }
 
-    const { error: updateError } = await supabase
+    const { data: completedReport, error: createError } = await supabase
       .from("research_reports")
-      .update({
-        status: "completed",
-        outline: pipeline.outline,
-        report: pipeline.report,
-        humanized_report: pipeline.humanized_report || pipeline.report,
-        prompt_tokens: pipeline.usage.prompt_tokens,
-        completion_tokens: pipeline.usage.completion_tokens,
-        estimated_cost_usd: pipeline.usage.estimated_cost_usd,
-        source_count: Array.isArray(pipeline.report.references)
-          ? pipeline.report.references.length
-          : 0,
-        finished_at: new Date().toISOString(),
-        latency_ms: latencyMs,
-      })
-      .eq("id", researchId)
-      .eq("user_id", userId)
+      .insert([
+        {
+          user_id: userId,
+          query,
+          title: query,
+          status: "completed",
+          research_mode: mode,
+          template,
+          output_style: settings.output_style,
+          depth: settings.depth,
+          model_name: settings.model_name,
+          outline: pipeline.outline,
+          report: pipeline.report,
+          humanization_used: pipeline.humanization_used,
+          prompt_tokens: pipeline.usage.prompt_tokens,
+          completion_tokens: pipeline.usage.completion_tokens,
+          estimated_cost_usd: pipeline.usage.estimated_cost_usd,
+          source_count: Array.isArray(pipeline.report.references)
+            ? pipeline.report.references.length
+            : 0,
+          started_at: new Date(startedAt).toISOString(),
+          finished_at: new Date().toISOString(),
+          latency_ms: latencyMs,
+          cache_key: cacheKey,
+        },
+      ])
+      .select("id")
+      .single()
 
-    if (updateError) {
-      throw new Error("Failed to persist research result")
+    if (createError || !completedReport) {
+      console.error("Failed to create completed research record", {
+        message: createError?.message,
+        code: createError?.code,
+        details: createError?.details,
+        hint: createError?.hint,
+      })
+      throw new Error(
+        `Failed to create completed research record: ${createError?.message || "unknown error"}`
+      )
     }
+
+    researchId = completedReport.id
 
     await supabase.from("research_query_cache").upsert(
       {
@@ -345,7 +341,7 @@ export async function POST(request: Request) {
       settings,
       outline: pipeline.outline,
       report: pipeline.report,
-      humanized_report: pipeline.humanized_report,
+      humanized_report: pipeline.humanized_report || pipeline.report,
       humanization_used: pipeline.humanization_used,
       usage: pipeline.usage,
       cached: false,

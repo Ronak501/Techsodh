@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
+import { ShareDialog } from "@/components/share-dialog";
+import { ResearchComments } from "@/components/research-comments";
+import { useRealtimeCollaborators } from "@/lib/hooks/useRealtime";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,6 +25,8 @@ import {
   ShieldCheck,
   Sparkles,
   Workflow,
+  Share2,
+  Users,
 } from "lucide-react";
 import { ResearchSummary } from "@/components/research-summary";
 import type {
@@ -70,6 +75,11 @@ export default function ResearchDetailPage() {
   const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
   const [feedbackSaving, setFeedbackSaving] = useState(false);
   const [useHumanized, setUseHumanized] = useState(true);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const { collaborators } = params.id
+    ? useRealtimeCollaborators(params.id)
+    : { collaborators: [] };
 
   useEffect(() => {
     const loadReport = async () => {
@@ -313,6 +323,28 @@ export default function ResearchDetailPage() {
                     PDF
                   </a>
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowShareDialog(true)}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowComments(!showComments)}
+                >
+                  <MessageSquareQuote className="mr-2 h-4 w-4" />
+                  Comments
+                </Button>
+                {collaborators.length > 0 && (
+                  <div className="flex items-center gap-1 px-3 py-2 border rounded-md text-sm">
+                    <Users className="h-4 w-4" />
+                    <span>{collaborators.length}</span>
+                  </div>
+                )}
                 <Button asChild size="sm">
                   <Link href={`/research/${data.id}/edit`}>
                     <FilePenLine className="mr-2 h-4 w-4" />
@@ -545,9 +577,24 @@ export default function ResearchDetailPage() {
               isHumanized={useHumanized}
               onToggleHumanization={() => setUseHumanized(!useHumanized)}
             />
+
+            {/* Comments Section */}
+            {showComments && data && (
+              <Card className="border-border/70 bg-card/70 p-5 shadow-sm">
+                <ResearchComments researchId={data.id} />
+              </Card>
+            )}
           </div>
         ) : null}
       </div>
+
+      {/* Share Dialog */}
+      {showShareDialog && data && (
+        <ShareDialog
+          researchId={data.id}
+          onClose={() => setShowShareDialog(false)}
+        />
+      )}
     </div>
   );
 }

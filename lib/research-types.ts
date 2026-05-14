@@ -138,3 +138,174 @@ export type ResearchPaperDocument = {
   references: ResearchPaperReference[]
   review: ResearchPaperReview
 }
+
+// ============ COLLABORATION & SHARING TYPES ============
+
+export type PermissionLevel = "view" | "comment" | "edit"
+
+export type ResearchShare = {
+  id: string
+  research_id: string
+  owner_id: string
+  shared_with_user_id?: string
+  shared_with_email?: string
+  permission_level: PermissionLevel
+  shared_at: string
+  expires_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export type ResearchCollaborator = {
+  id: string
+  research_id: string
+  user_id: string
+  cursor_position?: number
+  selected_section?: string
+  last_active: string
+  joined_at: string
+}
+
+export type ResearchComment = {
+  id: string
+  research_id: string
+  user_id: string
+  section: string
+  content: string
+  resolved: boolean
+  parent_comment_id?: string
+  created_at: string
+  updated_at: string
+  author?: {
+    id: string
+    email: string
+    name?: string
+  }
+}
+
+export type ResearchVersion = {
+  id: string
+  research_id: string
+  user_id: string
+  version_number: number
+  report_snapshot: ResearchReportBody
+  change_summary?: string
+  created_at: string
+}
+
+// ============ SEARCH & DISCOVERY TYPES ============
+
+export type ResearchSearchResult = {
+  id: string
+  research_id: string
+  title: string
+  topic: string
+  summary_text?: string
+  tags: string[]
+  author_id: string
+  is_public: boolean
+  view_count: number
+  citation_count: number
+  created_at: string
+  updated_at: string
+}
+
+export type ResearchCitation = {
+  id: string
+  citing_research_id: string
+  cited_research_id: string
+  citation_context?: string
+  created_at: string
+}
+
+export type ResearchTag = {
+  id: string
+  name: string
+  description?: string
+  usage_count: number
+  created_at: string
+}
+
+// ============ TEMPLATES & WORKFLOWS TYPES ============
+
+export type TemplateCategory =
+  | "literature_review"
+  | "technical_report"
+  | "claim_verification"
+  | "market_analysis"
+  | "competitor_analysis"
+  | "trend_research"
+  | "custom"
+
+export type TemplateType = "system" | "user"
+
+export type ResearchTemplateRecord = {
+  id: string
+  name: string
+  description?: string
+  category: TemplateCategory
+  template_type: TemplateType
+  created_by_user_id?: string
+  is_public: boolean
+  prompt_template: string
+  settings: ResearchSettings
+  example_usage?: string
+  tags: string[]
+  usage_count: number
+  rating: number
+  rating_count: number
+  created_at: string
+  updated_at: string
+}
+
+export type UserTemplateFavorite = {
+  id: string
+  user_id: string
+  template_id: string
+  created_at: string
+}
+
+export type WorkflowStep = {
+  id: string
+  name: string
+  type: "research" | "condition" | "transform" | "merge"
+  config: Record<string, unknown>
+  next_step_id?: string
+}
+
+export type WorkflowDefinition = {
+  id: string
+  name: string
+  description?: string
+  created_by_user_id: string
+  is_public: boolean
+  steps: WorkflowStep[]
+  triggers?: Record<string, unknown>
+  conditions?: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export type WorkflowExecutionStatus = "pending" | "running" | "completed" | "failed"
+
+export type WorkflowExecution = {
+  id: string
+  workflow_id: string
+  user_id: string
+  research_id?: string
+  status: WorkflowExecutionStatus
+  results?: Record<string, unknown>
+  error_message?: string
+  started_at: string
+  completed_at?: string
+}
+
+export type WorkflowStepResult = {
+  id: string
+  execution_id: string
+  step_index: number
+  step_name: string
+  output?: Record<string, unknown>
+  tokens_used?: number
+  completed_at: string
+}
