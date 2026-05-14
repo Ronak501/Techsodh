@@ -313,6 +313,12 @@ export default function ResearchDetailPage() {
                     PDF
                   </a>
                 </Button>
+                <Button asChild size="sm">
+                  <Link href={`/research/${data.id}/edit`}>
+                    <FilePenLine className="mr-2 h-4 w-4" />
+                    Edit Paper
+                  </Link>
+                </Button>
               </div>
             ) : null}
           </div>
