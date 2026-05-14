@@ -143,11 +143,6 @@ export default function DashboardPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [search, statusFilter, sortBy, pageSize]);
-
   const sortedJobs = [...filteredJobs].sort((a, b) => {
     if (sortBy === "oldest") {
       return (
@@ -305,21 +300,25 @@ export default function DashboardPage() {
                 <Input
                   placeholder="Search by query"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
                   className="h-11"
                 />
                 <select
                   className="h-11 rounded-lg border border-border/70 bg-background px-3 text-sm"
                   value={statusFilter}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setStatusFilter(
                       e.target.value as
                         | "all"
                         | "completed"
                         | "in_progress"
                         | "failed",
-                    )
-                  }
+                    );
+                    setPage(1);
+                  }}
                 >
                   <option value="all">All statuses</option>
                   <option value="completed">Completed</option>
@@ -329,11 +328,12 @@ export default function DashboardPage() {
                 <select
                   className="h-11 rounded-lg border border-border/70 bg-background px-3 text-sm"
                   value={sortBy}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setSortBy(
                       e.target.value as "newest" | "oldest" | "query_asc",
-                    )
-                  }
+                    );
+                    setPage(1);
+                  }}
                 >
                   <option value="newest">Newest first</option>
                   <option value="oldest">Oldest first</option>
@@ -425,7 +425,10 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <select
                     value={pageSize}
-                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }}
                     className="h-9 rounded-lg border border-border/70 bg-background px-2 text-sm"
                   >
                     <option value={5}>5 per page</option>

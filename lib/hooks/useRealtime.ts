@@ -1,7 +1,17 @@
 import { useEffect, useState, useRef } from "react"
 import { createClient } from "@/utils/supabase/client"
 import type { RealtimeChannel } from "@supabase/supabase-js"
-import type { ResearchCollaborator } from "@/lib/research-types"
+import type { ResearchCollaborator, ResearchComment } from "@/lib/research-types"
+
+type RealtimeChangePayload<T> = {
+  eventType: "INSERT" | "UPDATE" | "DELETE"
+  new: T
+  old: T
+}
+
+type RealtimeComment = ResearchComment & {
+  replies?: RealtimeComment[]
+}
 
 export function useRealtimeCollaborators(researchId: string) {
   const [collaborators, setCollaborators] = useState<ResearchCollaborator[]>([])
@@ -13,8 +23,10 @@ export function useRealtimeCollaborators(researchId: string) {
     const supabase = supabaseRef.current
 
     if (!researchId) {
-      setCollaborators([])
-      setIsLoading(false)
+      Promise.resolve().then(() => {
+        setCollaborators([])
+        setIsLoading(false)
+      })
       return
     }
 
@@ -41,7 +53,7 @@ export function useRealtimeCollaborators(researchId: string) {
           table: "research_collaborators",
           filter: `research_id=eq.${researchId}`,
         },
-        (payload: any) => {
+        (payload: RealtimeChangePayload<ResearchCollaborator>) => {
           if (payload.eventType === "INSERT") {
             setCollaborators((prev) => [...prev, payload.new])
           } else if (payload.eventType === "UPDATE") {
@@ -76,7 +88,7 @@ export function useRealtimeCollaborators(researchId: string) {
 }
 
 export function useRealtimeComments(researchId: string) {
-  const [comments, setComments] = useState<any[]>([])
+  const [comments, setComments] = useState<RealtimeComment[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const channelRef = useRef<RealtimeChannel | null>(null)
   const supabaseRef = useRef(createClient())
@@ -84,11 +96,19 @@ export function useRealtimeComments(researchId: string) {
   useEffect(() => {
     const supabase = supabaseRef.current
 
+    if (!researchId) {
+      Promise.resolve().then(() => {
+        setComments([])
+        setIsLoading(false)
+      })
+      return
+    }
+
     // Fetch initial comments
     const fetchComments = async () => {
       const response = await fetch(`/api/research/${researchId}/comments`)
       if (response.ok) {
-        const data = await response.json()
+        const data = (await response.json()) as RealtimeComment[]
         setComments(data)
       }
       setIsLoading(false)
@@ -107,7 +127,7 @@ export function useRealtimeComments(researchId: string) {
           table: "research_comments",
           filter: `research_id=eq.${researchId}`,
         },
-        (payload: any) => {
+        (payload: RealtimeChangePayload<RealtimeComment>) => {
           if (payload.eventType === "INSERT") {
             setComments((prev) => [...prev, payload.new])
           } else if (payload.eventType === "UPDATE") {

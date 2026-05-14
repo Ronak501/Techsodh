@@ -114,7 +114,7 @@ export function ResearchComments({ researchId }: CommentsProps) {
               {/* Replies */}
               {comment.replies && comment.replies.length > 0 && (
                 <div className="mt-2 space-y-2 border-l-2 border-gray-200 pl-3">
-                  {comment.replies.map((reply: any) => (
+                  {comment.replies.map((reply) => (
                     <div key={reply.id} className="text-sm">
                       <p className="font-medium">
                         {reply.author?.email || "Anonymous"}

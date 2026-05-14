@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Share2, Copy, Trash2, X } from "lucide-react";
+import type { ResearchShare } from "@/lib/research-types";
 
 type PermissionLevel = "view" | "comment" | "edit";
 
@@ -14,7 +15,7 @@ interface ShareDialogProps {
 }
 
 export function ShareDialog({ researchId, onClose }: ShareDialogProps) {
-  const [shares, setShares] = useState<any[]>([]);
+  const [shares, setShares] = useState<ResearchShare[]>([]);
   const [email, setEmail] = useState("");
   const [permission, setPermission] = useState<PermissionLevel>("view");
   const [expiresInDays, setExpiresInDays] = useState<number>(30);
@@ -39,8 +40,8 @@ export function ShareDialog({ researchId, onClose }: ShareDialogProps) {
       });
 
       if (response.ok) {
-        const share = await response.json();
-        setShares([...shares, share]);
+        const share = (await response.json()) as ResearchShare;
+        setShares((prev) => [...prev, share]);
         setEmail("");
       }
     } catch (error) {
@@ -55,7 +56,7 @@ export function ShareDialog({ researchId, onClose }: ShareDialogProps) {
       await fetch(`/api/research/${researchId}/share/${shareId}`, {
         method: "DELETE",
       });
-      setShares(shares.filter((s) => s.id !== shareId));
+      setShares((prev) => prev.filter((share) => share.id !== shareId));
     } catch (error) {
       console.error("Failed to remove share:", error);
     }
