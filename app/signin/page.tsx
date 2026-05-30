@@ -48,7 +48,7 @@ export default function LoginPage() {
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-semibold">Welcome back</h1>
           <p className="text-sm text-muted-foreground">
-            Sign in to your ResearchAgent account
+            Sign in to your TechSodh account
           </p>
         </div>
 

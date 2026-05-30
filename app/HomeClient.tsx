@@ -190,7 +190,7 @@ export default function HomeClient({ user }: Props) {
               <Brain className="h-5 w-5" />
             </div>
             <span className="text-lg font-semibold tracking-tight sm:text-xl">
-              ResearchAgent
+              TechSodh
             </span>
           </div>
 
@@ -481,7 +481,7 @@ export default function HomeClient({ user }: Props) {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-sm text-foreground/70 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary" />
-            ResearchAgent
+            TechSodh
           </div>
           <div className="flex items-center gap-6">
             <Link href="/price" className="transition hover:text-foreground">

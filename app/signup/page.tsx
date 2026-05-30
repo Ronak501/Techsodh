@@ -56,7 +56,7 @@ export default function SignUpPage() {
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-semibold">Create your account</h1>
           <p className="text-sm text-muted-foreground">
-            Start using ResearchAgent today
+            Start using TechSodh today
           </p>
         </div>
 
