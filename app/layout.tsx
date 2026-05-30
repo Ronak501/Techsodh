@@ -16,7 +16,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Research Agent - AI-Powered Research Automation",
+  title: "TechSodh - AI-Powered Research Automation",
   description:
     "Automated research with AI-powered literature retrieval, data analysis, and synthesis",
   generator: "Ronak Talaviya",
