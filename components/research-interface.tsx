@@ -228,7 +228,7 @@ export function ResearchInterface({
         {
           id: completed.id || crypto.randomUUID(),
           title: "AI Research Report",
-          authors: "AI Research Agent",
+          authors: "AI TechSodh",
           abstract:
             generatedReport?.executive_summary || "No summary available",
           citations: Array.isArray(generatedReport?.references)

@@ -1,6 +1,7 @@
 import {
   buildCacheKey,
   estimateCostUsd,
+  ensureCompleteReportSections,
   mergeSettings,
   resolveTemplate,
 } from "@/lib/research-engine"
@@ -44,5 +45,29 @@ describe("research-engine helpers", () => {
 
     const inferred = resolveTemplate("claim")
     expect(inferred).toBe("claim_verification")
+  })
+
+  it("ensureCompleteReportSections fills empty narrative sections", () => {
+    const completed = ensureCompleteReportSections({
+      report: {},
+      outline: {
+        title: "Sample Topic",
+        sections: [
+          { heading: "Background", description: "Context for the topic" },
+          { heading: "Evidence", description: "Supporting studies" },
+        ],
+      },
+      query: "sample research topic",
+      mode: "topic",
+      template: "literature_review",
+    })
+
+    expect(completed.main_analysis).toContain("sample research topic")
+    expect(completed.key_insights?.length).toBeGreaterThanOrEqual(3)
+    expect(completed.real_world_applications?.length).toBeGreaterThanOrEqual(3)
+    expect(completed.challenges).toContain("source quality")
+    expect(completed.future_scope).toContain("Future work")
+    expect(completed.conclusion).toContain("cautious conclusion")
+    expect(completed.section_confidence?.length).toBe(8)
   })
 })

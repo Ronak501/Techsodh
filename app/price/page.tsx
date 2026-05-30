@@ -82,7 +82,7 @@ const checkoutKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
 const plans = [
   {
-    name: "Free",
+    name: "Mini",
     price: "₹199",
     description: "Perfect for students getting started",
     features: [
@@ -193,10 +193,10 @@ export default function PricingPage() {
         amount: data.amount,
         currency: data.currency,
         order_id: data.order_id,
-        name: "Research Agent",
+        name: "TechSodh",
         description: `${planConfig.label} plan payment`,
         prefill: {
-          name: "Research Agent user",
+          name: "TechSodh user",
         },
         notes: {
           plan,

@@ -104,7 +104,6 @@ export async function enforceSubscriptionAndTokenAccess(
   const upgradeUrl = "/price"
   const usageMonth = getUsageMonth()
   const requestedTokens = Math.max(0, Math.ceil(params.requestedTokens))
-
   const subscription = await getSubscription(supabase, params.userId)
 
   const isActivePaidSubscription =
@@ -112,7 +111,64 @@ export async function enforceSubscriptionAndTokenAccess(
     subscription.status === "active" &&
     (subscription.plan === "pro" || subscription.plan === "premium")
 
+  // One-time free trial logic:
+  // - New users (no subscription row AND no prior usage rows) get a single free request
+  // - Trial token limit can be configured via `TRIAL_FREE_TOKENS`
+  const TRIAL_TOKENS = Number(process.env.TRIAL_FREE_TOKENS || 4000)
+
   if (!isActivePaidSubscription) {
+    // If there's no subscription record and no prior usage, allow a single trial
+    let everUsed = false
+
+    if (!subscription) {
+      const { data: anyData, error: anyErr } = await supabase
+        .from("user_monthly_token_usage")
+        .select("user_id")
+        .eq("user_id", params.userId)
+        .limit(1)
+
+      if (anyErr) {
+        throw new Error(`Failed to check trial usage: ${anyErr.message}`)
+      }
+
+      everUsed = Array.isArray(anyData) && anyData.length > 0
+    } else {
+      // User has a subscription row but it's not an active paid plan — treat as non-new
+      everUsed = true
+    }
+
+    if (!everUsed) {
+      // Allow the one-time trial request (bounded by a token limit)
+      if (requestedTokens > TRIAL_TOKENS) {
+        return {
+          ok: false,
+          status: 402,
+          payload: {
+            error: `Trial allows up to ${TRIAL_TOKENS} tokens. Please purchase a plan to continue.`,
+            code: "SUBSCRIPTION_REQUIRED",
+            upgrade_url: upgradeUrl,
+            details: {
+              trial_limit: TRIAL_TOKENS,
+              requested_tokens: requestedTokens,
+              feature: params.feature,
+            },
+          },
+        }
+      }
+
+      const monthlyLimit = TRIAL_TOKENS
+      const currentUsage = 0
+
+      return {
+        ok: true,
+        plan: "free",
+        monthlyLimit,
+        currentUsage,
+        remainingTokens: Math.max(0, monthlyLimit - requestedTokens),
+        usageMonth,
+      }
+    }
+
     return {
       ok: false,
       status: 402,

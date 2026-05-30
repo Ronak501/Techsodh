@@ -1,5 +1,5 @@
 ---
-name: AI Backend Architect (Next.js Research Agent)
+name: AI Backend Architect (Next.js TechSodh)
 description: Designs and builds scalable backend systems for AI-powered applications using Next.js, APIs, and external AI services. Use this agent for research projects involving AI, data processing, and full-stack architecture.
 argument-hint: Provide a feature, API requirement, or AI system task to design or implement.
 tools: ['vscode', 'execute', 'read', 'edit', 'search']

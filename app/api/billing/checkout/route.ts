@@ -115,7 +115,7 @@ async function createCheckoutResponse(request: Request, plan: BillingPlan) {
     amount: plan === "pro" ? 49900 : 149900,
     currency: "INR",
     customerEmail: user.email || undefined,
-    customerName: user.user_metadata?.full_name || user.email || "Research Agent user",
+    customerName: user.user_metadata?.full_name || user.email || "TechSodh user",
     appUrl,
   })
 }
