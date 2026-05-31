@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -37,6 +38,7 @@ export default function RootLayout({
         </ThemeProvider>
         <Toaster richColors position="top-right" />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
