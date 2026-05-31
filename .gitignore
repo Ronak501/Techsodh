@@ -57,3 +57,6 @@ Thumbs.db
 *.crt
 *.p12
 *.jks
+
+# Sentry Config File
+.env.sentry-build-plugin
