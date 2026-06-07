@@ -138,7 +138,7 @@ export default function HumanizerPage() {
               items={humanizerNavigation}
             />
             <Button asChild variant="ghost" size="sm" className="gap-2">
-              <Link href="/dashboard" className="gap-2">
+              <Link href="/" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Link>
