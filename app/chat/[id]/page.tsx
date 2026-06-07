@@ -235,7 +235,7 @@ export default function ChatPage() {
     <div className="chat-surface flex h-screen bg-background text-foreground">
       <aside className="glass-panel m-3 hidden w-80 flex-col overflow-hidden rounded-3xl lg:flex">
         <div className="space-y-3 border-b border-border/70 p-4">
-          <Link href="/dashboard">
+          <Link href="/">
             <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background py-2 transition hover:bg-accent hover:text-accent-foreground">
               <LayoutDashboard className="h-4 w-4" />
               Dashboard
