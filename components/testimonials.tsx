@@ -52,7 +52,7 @@ export default function Testimonials() {
             key={index}
             className="flex flex-col justify-between w-[320px] shrink-0 rounded-2xl border border-border/50 bg-background/50 p-6 shadow-sm"
           >
-            <p className="text-lg leading-relaxed text-muted-foreground text-balance">"{item.quote}"</p>
+            <p className="text-lg leading-relaxed text-muted-foreground text-balance">&quot;{item.quote}&quot;</p>
             <div className="mt-8 flex items-center gap-3">
               <img src={item.avatar} alt={item.author} className="h-10 w-10 rounded-full" />
               <p className="font-medium text-foreground">{item.author}</p>

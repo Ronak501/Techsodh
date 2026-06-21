@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Navbar } from "@/components/navbar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -72,7 +73,7 @@ const workspaceContext =
 
 function StatusIcon({ status }: { status: ResearchHistoryItem["status"] }) {
   if (status === "completed") return <CheckCircle2 className="h-4 w-4 text-primary" />;
-  if (status === "in_progress") return <Clock className="h-4 w-4 text-blue-500 animate-pulse" />;
+  if (status === "in_progress") return <Clock className="h-4 w-4 text-foreground animate-pulse" />;
   return <AlertCircle className="h-4 w-4 text-destructive" />;
 }
 
@@ -176,12 +177,13 @@ export default function ResearchPage() {
   };
 
   return (
-    <div className="chat-surface flex h-screen bg-background text-foreground overflow-hidden">
+    <div className="chat-surface flex h-screen bg-background text-foreground overflow-hidden pt-16">
+      <Navbar />
       
       {/* 1. LEFT SIDEBAR: Compact Research History */}
       <aside className="glass-panel m-3 hidden w-64 flex-col overflow-hidden rounded-3xl lg:flex shadow-sm">
         <div className="space-y-3 border-b border-border/70 p-4 bg-background/50">
-          <Link href="/">
+          <Link href="/dashboard">
             <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background py-2 transition hover:bg-accent hover:text-accent-foreground text-sm font-medium shadow-xs">
               <LayoutDashboard className="h-4 w-4" />
               Dashboard

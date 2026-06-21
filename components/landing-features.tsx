@@ -92,7 +92,7 @@ export function LandingFeatures() {
       <section className="mx-auto max-w-7xl px-6 py-24">
         <div className="grid items-center gap-16 lg:grid-cols-[420px_1fr]">
           <div className="group">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] transition-transform duration-300 group-hover:scale-110">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] transition-transform duration-300 group-hover:scale-110">
               <FileText className="h-8 w-8" />
             </div>
 

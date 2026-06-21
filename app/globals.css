@@ -10,7 +10,7 @@
   --card-foreground: oklch(0.23 0.03 250);
   --popover: oklch(0.995 0.004 95);
   --popover-foreground: oklch(0.23 0.03 250);
-  --primary: oklch(0.48 0.13 248);
+  --primary: oklch(0.23 0.03 250);
   --primary-foreground: oklch(0.98 0.004 250);
   --secondary: oklch(0.94 0.02 100);
   --secondary-foreground: oklch(0.28 0.03 250);
@@ -46,7 +46,7 @@
   --card-foreground: oklch(0.96 0.014 95);
   --popover: oklch(0.24 0.02 245);
   --popover-foreground: oklch(0.96 0.014 95);
-  --primary: oklch(0.78 0.12 95);
+  --primary: oklch(0.96 0.014 95);
   --primary-foreground: oklch(0.2 0.03 245);
   --secondary: oklch(0.3 0.02 245);
   --secondary-foreground: oklch(0.94 0.015 95);
@@ -121,17 +121,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(
-      circle at 8% 18%,
-      color-mix(in oklch, var(--accent) 22%, transparent),
-      transparent 38%
-    ),
-    radial-gradient(
-      circle at 90% 4%,
-      color-mix(in oklch, var(--primary) 24%, transparent),
-      transparent 44%
-    );
-    background-attachment: fixed;
     line-height: 1.6;
   }
 
@@ -158,106 +147,13 @@
     text-underline-offset: 0.18em;
   }
 
-  .dashboard-surface {
-    position: relative;
-    isolation: isolate;
-  }
-
-  .dashboard-surface::before,
-  .dashboard-surface::after {
-    content: "";
-    position: absolute;
-    inset: auto;
-    border-radius: 9999px;
-    pointer-events: none;
-    filter: blur(32px);
-    opacity: 0.7;
-    z-index: -1;
-  }
-
-  .dashboard-surface::before {
-    width: 18rem;
-    height: 18rem;
-    top: -4rem;
-    right: -3rem;
-    background: color-mix(in oklch, var(--primary) 20%, transparent);
-  }
-
-  .dashboard-surface::after {
-    width: 14rem;
-    height: 14rem;
-    bottom: -4rem;
-    left: -3rem;
-    background: color-mix(in oklch, var(--accent) 24%, transparent);
-  }
-
-  .dashboard-card {
-    transform-style: preserve-3d;
-    box-shadow:
-      0 28px 60px -34px color-mix(in oklch, var(--foreground) 60%, transparent),
-      0 2px 0 color-mix(in oklch, var(--foreground) 6%, transparent) inset;
-  }
-
-  /* Disable tilt rotation on dashboard tiles to ensure stable layout */
-  .dashboard-card-tilt {
-    transform: none !important;
-  }
-
-  .dashboard-glass {
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in oklch, var(--card) 88%, transparent),
-        color-mix(in oklch, var(--card) 72%, transparent)
-      );
-    backdrop-filter: blur(18px);
-  }
-
+  .dashboard-surface,
   .home-surface,
   .chat-surface,
   .humanizer-surface,
   .research-surface {
     position: relative;
     isolation: isolate;
-  }
-
-  .home-surface::before,
-  .home-surface::after,
-  .chat-surface::before,
-  .chat-surface::after,
-  .humanizer-surface::before,
-  .humanizer-surface::after,
-  .research-surface::before,
-  .research-surface::after {
-    content: "";
-    position: absolute;
-    border-radius: 9999px;
-    pointer-events: none;
-    z-index: -1;
-    filter: blur(40px);
-    opacity: 0.65;
-  }
-
-  .home-surface::before,
-  .chat-surface::before,
-  .humanizer-surface::before,
-  .research-surface::before {
-    width: 20rem;
-    height: 20rem;
-    top: -5rem;
-    right: -4rem;
-    background: color-mix(in oklch, var(--primary) 24%, transparent);
-  }
-
-  .home-surface::after,
-  .chat-surface::after,
-  .humanizer-surface::after,
-  .research-surface::after {
-    width: 16rem;
-    height: 16rem;
-    bottom: -4rem;
-    left: -3rem;
-    background: color-mix(in oklch, var(--accent) 30%, transparent);
   }
 
   .glass-panel {
@@ -390,22 +286,7 @@
     display: none;
   }
 
-  /* Clip large blurred background circles so they don't create extra page width */
-  .home-surface::before,
-  .home-surface::after,
-  .chat-surface::before,
-  .chat-surface::after,
-  .humanizer-surface::before,
-  .humanizer-surface::after,
-  .research-surface::before,
-  .research-surface::after,
-  .dashboard-surface::before,
-  .dashboard-surface::after {
-    max-width: 100vw;
-    max-height: 100vh;
-    right: clamp(-6rem, -4rem, -2rem);
-    left: auto;
-  }
+  /* Hidden scrollbars */
 
   /* Allow main surface containers to scroll internally without document scrollbars */
   .home-surface,

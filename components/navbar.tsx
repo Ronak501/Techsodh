@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import { FaDiscord, FaRedditAlien, FaXTwitter } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navbar() {
   return (
@@ -18,10 +19,22 @@ export function Navbar() {
         {/* Center Links */}
         <div className="hidden items-center gap-8 md:flex">
           <Link
-            href="#features"
+            href="/dashboard"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Features
+            Dashboard
+          </Link>
+          <Link
+            href="/research"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Research
+          </Link>
+          <Link
+            href="/humanizer"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Humanizer
           </Link>
           <Link
             href="/price"
@@ -29,17 +42,12 @@ export function Navbar() {
           >
             Pricing
           </Link>
-          <Link
-            href="#testimonials"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Testimonials
-          </Link>
         </div>
 
         {/* Right Section */}
         <div className="flex items-center gap-4">
           <div className="hidden items-center gap-4 md:flex">
+            <ThemeToggle />
             <Link href="#" className="text-muted-foreground hover:text-foreground">
               <FaDiscord className="h-5 w-5" />
             </Link>

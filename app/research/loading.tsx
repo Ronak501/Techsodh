@@ -1,4 +1,4 @@
-import { Search, Sparkles, FileText, LayoutDashboard } from "lucide-react";
+import { Search, Sparkles, FileText } from "lucide-react";
 
 export default function Loading() {
   return (
