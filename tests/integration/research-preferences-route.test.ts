@@ -50,7 +50,7 @@ describe("research preferences API", () => {
         preferred_template: "technical_report",
         output_style: "detailed",
         depth: "deep",
-        model_name: "gemini-pro",
+        model_name: "llama-3.3-70b-versatile",
       },
       error: null,
     })
@@ -72,7 +72,7 @@ describe("research preferences API", () => {
       preferred_template: "technical_report",
       output_style: "detailed",
       depth: "deep",
-      model_name: "gemini-pro",
+      model_name: "llama-3.3-70b-versatile",
     })
   })
 
@@ -111,7 +111,7 @@ describe("research preferences API", () => {
           preferred_template: "literature_review",
           output_style: "balanced",
           depth: "standard",
-          model_name: "gemini-default",
+          model_name: "llama-3.3-70b-versatile",
         }),
       })
     )

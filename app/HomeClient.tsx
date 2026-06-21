@@ -147,7 +147,7 @@ export default function HomeClient({ user }: Props) {
     () =>
       user
         ? [
-            { href: "/dashboard", label: "Dashboard" },
+            { href: "/", label: "Dashboard" },
             { href: "/research", label: "Research" },
             { href: "/humanizer", label: "Humanizer" },
             { href: "/chat", label: "Chat" },
@@ -223,7 +223,7 @@ export default function HomeClient({ user }: Props) {
                   variant="outline"
                   className="hidden sm:inline-flex"
                 >
-                  <Link href="/dashboard">Dashboard</Link>
+                  <Link href="/">Dashboard</Link>
                 </Button>
                 <Button asChild size="sm" className="hidden sm:inline-flex">
                   <Link href="/research">Research</Link>
@@ -301,7 +301,7 @@ export default function HomeClient({ user }: Props) {
                 <Link href="/chat">Ask in Chat</Link>
               </Button>
               <Button asChild size="lg" variant="ghost">
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/">Dashboard</Link>
               </Button>
             </div>
 

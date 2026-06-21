@@ -25,7 +25,7 @@ describe("research-engine helpers", () => {
       {
         output_style: "concise",
         depth: "standard",
-        model_name: "gemini-pref",
+        model_name: "llama-3.3-70b-versatile",
       },
       {
         output_style: "detailed",
@@ -35,7 +35,7 @@ describe("research-engine helpers", () => {
     expect(merged).toEqual({
       output_style: "detailed",
       depth: "standard",
-      model_name: "gemini-pref",
+      model_name: "llama-3.3-70b-versatile",
     })
   })
 

@@ -11,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import { createClient } from "@/utils/supabase/client";
+import { getMessages } from "@/lib/actions/messages";
 import { Button } from "@/components/ui/button";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { chatNavigation } from "@/lib/navigation";
@@ -176,9 +177,13 @@ export default function ChatPage() {
   useEffect(() => {
     if (!conversationId) return;
 
-    fetch(`/api/messages?conversationId=${conversationId}`)
-      .then((res) => res.json())
-      .then((data) => setMessages(data || []));
+    getMessages(conversationId).then((res) => {
+      if (res.success && res.data) {
+        setMessages(res.data);
+      } else {
+        toast.error("Failed to load messages");
+      }
+    });
   }, [conversationId]);
 
   const sendMessage = async () => {
@@ -235,7 +240,7 @@ export default function ChatPage() {
     <div className="chat-surface flex h-screen bg-background text-foreground">
       <aside className="glass-panel m-3 hidden w-80 flex-col overflow-hidden rounded-3xl lg:flex">
         <div className="space-y-3 border-b border-border/70 p-4">
-          <Link href="/dashboard">
+          <Link href="/">
             <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background py-2 transition hover:bg-accent hover:text-accent-foreground">
               <LayoutDashboard className="h-4 w-4" />
               Dashboard

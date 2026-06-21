@@ -154,7 +154,7 @@ export default function ChatPage() {
         <div className="space-y-3 border-b border-border/60 p-4">
           <div className="flex items-center justify-between gap-2">
             <Link
-              href="/dashboard"
+              href="/"
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background/80 py-2 text-sm transition hover:bg-accent hover:text-accent-foreground"
             >
               <LayoutDashboard className="h-4 w-4" />

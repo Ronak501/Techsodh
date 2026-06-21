@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     return safeJsonResponse(500, error.message)
   }
 
-  const returnPath = new URL(request.url).searchParams.get("returnPath") || "/dashboard"
+  const returnPath = new URL(request.url).searchParams.get("returnPath") || "/"
   const target = new URL(returnPath, getAppUrl(request))
   target.searchParams.set("billing", subscription?.plan || "free")
   target.searchParams.set("billing_provider", subscription?.provider || "razorpay")

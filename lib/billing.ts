@@ -116,7 +116,7 @@ export function getCheckoutUrl(plan: BillingPlan) {
   return `/api/billing/checkout?plan=${plan}`
 }
 
-export function getBillingPortalUrl(returnPath = "/dashboard") {
+export function getBillingPortalUrl(returnPath = "/") {
   return `/api/billing/portal?returnPath=${encodeURIComponent(returnPath)}`
 }
 

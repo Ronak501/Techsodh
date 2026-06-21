@@ -5,7 +5,7 @@
 
 export const mainNavigation = [
   { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/", label: "Dashboard" },
   { href: "/research", label: "Research" },
   { href: "/humanizer", label: "Humanizer" },
   { href: "/chat", label: "Chat" },
@@ -14,7 +14,7 @@ export const mainNavigation = [
 
 export const dashboardNavigation = [
   { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/", label: "Dashboard" },
   { href: "/research", label: "Research" },
   { href: "/humanizer", label: "Humanizer" },
   { href: "/chat", label: "Chat" },
@@ -23,14 +23,14 @@ export const dashboardNavigation = [
 
 export const researchNavigation = [
   { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/", label: "Dashboard" },
   { href: "/chat", label: "Chat" },
   { href: "/humanizer", label: "Humanizer" },
   { href: "/research", label: "Research" },
 ] as const;
 
 export const chatNavigation = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/", label: "Dashboard" },
   { href: "/research", label: "Research" },
   { href: "/humanizer", label: "Humanizer" },
   { href: "/chat", label: "Chat" },
@@ -38,7 +38,7 @@ export const chatNavigation = [
 
 export const humanizerNavigation = [
   { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/", label: "Dashboard" },
   { href: "/research", label: "Research" },
   { href: "/chat", label: "Chat" },
   { href: "/humanizer", label: "Humanizer" },

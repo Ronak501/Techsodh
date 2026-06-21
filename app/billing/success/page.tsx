@@ -77,10 +77,10 @@ export default async function BillingSuccessPage({
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button asChild>
-              <Link href="/dashboard">Go to dashboard</Link>
+              <Link href="/">Go to dashboard</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href={getBillingPortalUrl("/dashboard")}>
+              <Link href={getBillingPortalUrl("/")}>
                 Manage billing
               </Link>
             </Button>

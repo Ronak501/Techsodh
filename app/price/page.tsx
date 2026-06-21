@@ -82,38 +82,25 @@ const checkoutKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
 const plans = [
   {
-    name: "Mini",
-    price: "₹199",
-    description: "Perfect for students getting started",
-    features: [
-      "10 Research Queries / month",
-      "Basic AI Chat",
-      "Limited Context Memory",
-      "Community Support",
-    ],
-    button: "Get Started",
-    highlight: false,
-  },
-  {
-    name: "Pro",
+    name: "Professional",
     price: "₹499 / month",
-    description: "For serious researchers & creators",
+    description: "Designed for researchers, students, and professionals",
     plan: "pro" as const,
     features: [
-      "200 Research Queries / month",
+      "50 Research Queries / month",
       "Advanced AI Research",
       "Persistent Memory",
       "PDF Export",
       "Citation Tracking",
       "Priority Support",
     ],
-    button: "Upgrade to Pro",
+    button: "Start Professional",
     highlight: true,
   },
   {
     name: "Premium",
     price: "₹1499 / month",
-    description: "For power users & institutions",
+    description: "For power users and advanced research workflows",
     plan: "premium" as const,
     features: [
       "Unlimited Research",
@@ -123,12 +110,12 @@ const plans = [
       "API Access",
       "Premium Support",
     ],
-    button: "Go Premium",
+    button: "Choose Premium",
     highlight: false,
   },
-] as const;
+];
 
-export default function PricingPage() {
+export default function PricingPage() { 
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<BillingPlan | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -246,24 +233,41 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-20 text-foreground">
-      <button
-        onClick={() => router.back()}
-        className="mb-8 rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-      >
-        ← Back
-      </button>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <Button
+            onClick={() => router.back()}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground bg-black text-white hover:bg-black/90"
+          >
+            ← Back
+          </Button>
 
-      <div className="mx-auto mb-16 max-w-6xl text-center">
-        <h1 className="mb-4 text-5xl font-bold">
-          Simple & Transparent Pricing
+          <div className="flex items-center gap-4">
+            <Button variant="ghost">Contact Sales</Button>
+
+            <Button className="bg-black text-white hover:bg-black/90">
+              Get Started
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-6xl px-4 py-16 text-center">
+        <h1 className="text-5xl font-black tracking-tight md:text-7xl lg:text-8xl">
+          TechSodh{" "}
+          <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-green-400 bg-clip-text text-transparent">
+            Plans
+          </span>
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Choose the perfect plan for your AI-powered research journey
+
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
+          Unlock higher limits and better models.
         </p>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Razorpay checkout supports UPI, cards, and India-friendly standard
-          payments.
+
+        <p className="mx-auto mt-3 max-w-3xl text-muted-foreground">
+          Choose the plan that matches your research ambitions and scale your
+          AI-powered research workflow.
         </p>
       </div>
 
@@ -273,11 +277,15 @@ export default function PricingPage() {
         </div>
       ) : null}
 
-      <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3">
+      <div className="mx-auto mb-20 grid max-w-5xl gap-8 md:grid-cols-2">
         {plans.map((plan, index) => (
           <Card
             key={index}
-            className={`p-8 border-border/50 ${plan.highlight ? "border-2 border-primary shadow-lg scale-105" : ""}`}
+            className={`relative p-8 transition-all duration-300 ${
+              plan.highlight
+                ? "scale-105 border-2 border-black shadow-2xl"
+                : "border border-border/50"
+            }`}
           >
             <h2 className="mb-2 text-2xl font-semibold">{plan.name}</h2>
             <p className="mb-4 text-3xl font-bold">{plan.price}</p>
@@ -289,22 +297,14 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            {"plan" in plan ? (
-              <Button
-                className="w-full"
-                variant={plan.highlight ? "default" : "outline"}
-                onClick={() => openCheckout(plan.plan)}
-                disabled={loadingPlan === plan.plan}
-              >
-                {loadingPlan === plan.plan
-                  ? "Opening checkout..."
-                  : plan.button}
-              </Button>
-            ) : (
-              <Button className="w-full" variant="outline" asChild>
-                <Link href="/signup">{plan.button}</Link>
-              </Button>
-            )}
+            <Button
+              className="w-full bg-black text-white hover:bg-black/90"
+              variant={plan.highlight ? "default" : "outline"}
+              onClick={() => openCheckout(plan.plan)}
+              disabled={loadingPlan === plan.plan}
+            >
+              {loadingPlan === plan.plan ? "Opening checkout..." : plan.button}
+            </Button>
           </Card>
         ))}
       </div>

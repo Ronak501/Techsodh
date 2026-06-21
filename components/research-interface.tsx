@@ -57,7 +57,7 @@ const defaultPreferences: ResearchPreferences = {
   preferred_template: "literature_review",
   output_style: "balanced",
   depth: "standard",
-  model_name: "gemini-default",
+  model_name: "llama-3.3-70b-versatile",
 };
 
 export function ResearchInterface({
