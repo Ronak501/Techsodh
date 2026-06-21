@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 const testimonials = [
   {
     quote:
-      "ResearchLM is a beautiful way to explore and understand complex research.",
+      "Techsodh is a beautiful way to explore and understand complex research.",
     author: "TechCrunch",
     avatar: "https://i.pravatar.cc/150?img=1",
   },
@@ -17,7 +17,7 @@ const testimonials = [
   },
   {
     quote:
-      "ResearchLM transformed how our team studies papers and documentation.",
+      "Techsodh transformed how our team studies papers and documentation.",
     author: "Research Labs",
     avatar: "https://i.pravatar.cc/150?img=3",
   },
@@ -50,10 +50,13 @@ export default function Testimonials() {
         {[...testimonials, ...testimonials].map((item, index) => (
           <div
             key={index}
-            className="h-[400px] w-[420px] shrink-0 rounded-[32px] bg-muted/40 p-8"
+            className="flex flex-col justify-between w-[320px] shrink-0 rounded-2xl border border-border/50 bg-background/50 p-6 shadow-sm"
           >
-            <p className="text-1xl">{item.quote}</p>
-            <p className="mt-12">{item.author}</p>
+            <p className="text-lg leading-relaxed text-muted-foreground text-balance">&quot;{item.quote}&quot;</p>
+            <div className="mt-8 flex items-center gap-3">
+              <img src={item.avatar} alt={item.author} className="h-10 w-10 rounded-full" />
+              <p className="font-medium text-foreground">{item.author}</p>
+            </div>
           </div>
         ))}
       </motion.div>
