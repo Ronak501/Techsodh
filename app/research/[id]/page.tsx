@@ -435,7 +435,7 @@ export default function ResearchDetailPage() {
                 settings: {
                   output_style: data.output_style || "balanced",
                   depth: data.depth || "standard",
-                  model_name: data.model_name || "gemini-default",
+                  model_name: data.model_name || "llama-3.3-70b-versatile",
                 },
                 outline: data.outline,
                 report:

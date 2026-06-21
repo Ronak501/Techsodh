@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
-import { callGemini } from "@/lib/chat-gemini"
+import { callGroq } from "@/lib/chat-groq"
 import {
     enforceRateLimit,
     getRequestIp,
@@ -34,8 +34,8 @@ export async function POST(request: Request) {
 
     const supabase = await createClient()
 
-    if (!process.env.GEMINI_API || !process.env.GEMINI_API_KEY) {
-        return safeJsonResponse(500, "AI service is not configured")
+    if (!process.env.GROQ_API_KEY) {
+        return NextResponse.json({ error: "AI not configured" }, { status: 500 })
     }
 
     // Verify conversation ownership
@@ -124,8 +124,8 @@ export async function POST(request: Request) {
 
     const fullHistory = [...safeHistory, { role: "user" as const, content: message }]
 
-    // Call Gemini
-    const completion = await callGemini(fullHistory)
+    // Call Groq
+    const completion = await callGroq(fullHistory)
 
     if (!completion.reply) {
         return safeJsonResponse(500, "AI returned empty response")

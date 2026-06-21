@@ -45,13 +45,6 @@ export type ReferenceItem = {
   support: SourceSupport
 }
 
-export type FactCheckItem = {
-  statement: string
-  tag: VerificationTag
-  reason: string
-  reference_urls: string[]
-}
-
 export type SectionConfidence = {
   section: string
   score: number

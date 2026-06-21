@@ -1187,16 +1187,16 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
 
           <section id="research-agent" className="space-y-4">
             <SectionHeading
-              eyebrow="AI research agent"
+              eyebrow="Techsodh"
               title="Animated workflow with clear progress indicators"
-              description="Track each stage of the research agent so users can see what the model is doing without opening logs."
+              description="Track each stage of Techsodh so users can see what the model is doing without opening logs."
             />
 
             <Card className="rounded-[28px] border-border/70 bg-card/90 p-0 shadow-[0_22px_70px_-44px_rgba(15,23,42,0.5)]">
               <div className="p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Research agent</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Techsodh</p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight">Current run status</h3>
                   </div>
                   <Badge variant="secondary" className="rounded-full px-3 py-1">

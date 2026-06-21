@@ -1,5 +1,5 @@
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
-const GEMINI_API = process.env.GEMINI_API!;
+const GROQ_API_KEY = process.env.GROQ_API_KEY!;
+const GROQ_API = process.env.GROQ_API!;
 
 export type HumanizeTone = "natural" | "casual" | "professional" | "concise";
 
@@ -33,20 +33,26 @@ export async function humanizeText(
   input: string,
   tone: HumanizeTone = "natural",
 ): Promise<HumanizeResult> {
-  if (!GEMINI_API || !GEMINI_API_KEY) {
-    throw new Error("Gemini is not configured");
+  if (!GROQ_API || !GROQ_API_KEY) {
+    throw new Error("Groq is not configured");
   }
 
-  const res = await fetch(`${GEMINI_API}?key=${GEMINI_API_KEY}`, {
+  const res = await fetch(GROQ_API, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${GROQ_API_KEY}`
+    },
     body: JSON.stringify({
-      contents: [
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert writing editor that makes text sound human without changing its meaning."
+        },
         {
           role: "user",
-          parts: [
-            {
-              text: `Rewrite the text below so it sounds human-written.
+          content: `Rewrite the text below so it sounds human-written.
 
 Requirements:
 - Preserve the original meaning.
@@ -59,40 +65,29 @@ Requirements:
 Tone: ${toneInstruction(tone)}
 
 Text:
-${input}`,
-            },
-          ],
-        },
+${input}`
+        }
       ],
-      generationConfig: {
-        temperature: 0.4,
-      },
-      system_instruction: {
-        parts: [
-          {
-            text: "You are an expert writing editor that makes text sound human without changing its meaning.",
-          },
-        ],
-      },
+      temperature: 0.4,
     }),
   });
 
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`Gemini request failed: ${errorText}`);
+    throw new Error(`Groq request failed: ${errorText}`);
   }
 
   const data = await res.json();
 
-  if (!data.candidates || !data.candidates.length) {
-    throw new Error("Gemini returned no candidates");
+  if (!data.choices || !data.choices.length) {
+    throw new Error("Groq returned no candidates");
   }
 
-  const raw = String(data.candidates[0]?.content?.parts?.[0]?.text || "");
+  const raw = String(data.choices[0]?.message?.content || "");
 
   return {
     text: normalizeHumanizedText(raw),
-    promptTokens: Number(data.usageMetadata?.promptTokenCount || 0),
-    completionTokens: Number(data.usageMetadata?.candidatesTokenCount || 0),
+    promptTokens: Number(data.usage?.prompt_tokens || 0),
+    completionTokens: Number(data.usage?.completion_tokens || 0),
   };
 }

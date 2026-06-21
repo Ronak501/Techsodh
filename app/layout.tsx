@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   description:
     "Automated research with AI-powered literature retrieval, data analysis, and synthesis",
   generator: "Ronak Talaviya",
+  icons: {
+    icon: "/avatars/techsodh.png", 
+  },
 };
 
 export default function RootLayout({
