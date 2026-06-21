@@ -11,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import { createClient } from "@/utils/supabase/client";
+import { getMessages } from "@/lib/actions/messages";
 import { Button } from "@/components/ui/button";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { chatNavigation } from "@/lib/navigation";
@@ -176,9 +177,13 @@ export default function ChatPage() {
   useEffect(() => {
     if (!conversationId) return;
 
-    fetch(`/api/messages?conversationId=${conversationId}`)
-      .then((res) => res.json())
-      .then((data) => setMessages(data || []));
+    getMessages(conversationId).then((res) => {
+      if (res.success && res.data) {
+        setMessages(res.data);
+      } else {
+        toast.error("Failed to load messages");
+      }
+    });
   }, [conversationId]);
 
   const sendMessage = async () => {

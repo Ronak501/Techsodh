@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { humanizerNavigation } from "@/lib/navigation";
+import { Navbar } from "@/components/navbar";
 
 const toneOptions = [
   {
@@ -129,7 +130,8 @@ export default function HumanizerPage() {
   };
 
   return (
-    <div className="humanizer-surface min-h-screen bg-linear-to-br from-background via-background to-muted/35 text-foreground">
+    <div className="humanizer-surface min-h-screen bg-linear-to-br from-background via-background to-muted/35 text-foreground pt-16">
+      <Navbar />
       <div className="border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="flex items-center gap-3">

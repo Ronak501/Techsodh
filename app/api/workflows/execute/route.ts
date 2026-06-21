@@ -97,7 +97,7 @@ export async function POST(request: Request) {
               settings: resolvedConfig.settings || {
                 output_style: "balanced",
                 depth: "standard",
-                model_name: "gemini-default",
+                model_name: "llama-3.3-70b-versatile",
               },
             })
 

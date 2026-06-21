@@ -240,6 +240,9 @@ export default function ResearchPage() {
                 Send
               </Button>
             </div>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              Shift + Enter for new line. Chat history is contextualized to your selected research.
+            </p>
           </div>
         </Card>
 
@@ -258,6 +261,7 @@ export default function ResearchPage() {
               Export the current item as a PDF or switch formats if needed.
             </p>
           </div>
+        </div>
 
           <div className="mt-4 space-y-3">
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">

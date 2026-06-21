@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
-import { callGemini } from "@/lib/chat-gemini"
+import { callGroq } from "@/lib/chat-groq"
 import {
     enforceRateLimit,
     getRequestIp,
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
         },
     ])
 
-    const completion = await callGemini([
+    const completion = await callGroq([
         ...safeHistory,
         { role: "user" as const, content: message },
     ])

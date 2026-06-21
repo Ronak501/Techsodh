@@ -1,7 +1,6 @@
 import type {
   ClaimVerdict,
   EvidenceStrength,
-  FactCheckItem,
   ResearchOutline,
   ResearchPreferences,
   ResearchReportBody,
@@ -11,10 +10,6 @@ import type {
   SectionConfidence,
 } from "@/lib/research-types"
 import { humanizeText, type HumanizeTone } from "@/lib/humanizer"
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
-const GEMINI_API = process.env.GEMINI_API!
-const GEMINI_FALLBACK_API = process.env.GEMINI_FALLBACK_API
 
 export type ResearchMode = "topic" | "claim"
 
@@ -44,7 +39,7 @@ const defaultPreferences: ResearchPreferences = {
   preferred_template: "literature_review",
   output_style: "balanced",
   depth: "standard",
-  model_name: "gemini-default",
+  model_name: "llama-3.3-70b-versatile",
 }
 
 const RETRY_ATTEMPTS = 5
@@ -52,7 +47,7 @@ const JSON_PARSE_ATTEMPTS = 3
 const BASE_RETRY_DELAY_MS = 600
 const MAX_RETRY_DELAY_MS = 12_000
 
-type GeminiResult = {
+type GroqResult = {
   text: string
   promptTokens: number
   completionTokens: number
@@ -398,7 +393,7 @@ function findBalancedJsonCandidate(input: string): string | null {
   return null
 }
 
-async function callGeminiForJson<T>(
+async function callGroqForJson<T>(
   prompt: string,
   settings: ResearchSettings,
   phase: string
@@ -415,7 +410,7 @@ async function callGeminiForJson<T>(
         ? prompt
         : `${prompt}\n\nIMPORTANT: Return valid RFC8259 JSON only. Do not include markdown fences, code blocks, comments, explanations, or extra prose before/after JSON.`
 
-    const result = await callGemini(strictPrompt, settings, {
+    const result = await callGroq(strictPrompt, settings, {
       expectJson: true,
     })
     totalPromptTokens += result.promptTokens
@@ -438,7 +433,7 @@ async function callGeminiForJson<T>(
       // If the generation is truncated or malformed, ask the model to repair only the JSON.
       if (attempt < JSON_PARSE_ATTEMPTS) {
         try {
-          const repaired = await repairGeminiJson<T>(result.text, settings)
+          const repaired = await repairGroqJson<T>(result.text, settings)
           totalPromptTokens += repaired.promptTokens
           totalCompletionTokens += repaired.completionTokens
 
@@ -484,7 +479,7 @@ async function callGeminiForJson<T>(
   )
 }
 
-async function repairGeminiJson<T>(
+async function repairGroqJson<T>(
   brokenJson: string,
   settings: ResearchSettings
 ): Promise<{ parsed: T; promptTokens: number; completionTokens: number }> {
@@ -514,7 +509,7 @@ Broken JSON:
 ${brokenJson.substring(0, 2000)}
 `
 
-  const repaired = await callGemini(repairPrompt, settings, { expectJson: true })
+  const repaired = await callGroq(repairPrompt, settings, { expectJson: true })
 
   try {
     return {
@@ -594,14 +589,14 @@ function computeRetryDelayMs(attempt: number, retryAfterMs?: number | null, stat
   return delayMs
 }
 
-async function callGeminiWithRetry(
+async function callGroqWithRetry(
   prompt: string,
   settings: ResearchSettings,
   endpoint: string,
   options?: {
     expectJson?: boolean
   }
-): Promise<GeminiResult> {
+): Promise<GroqResult> {
   const temperature =
     settings.output_style === "concise"
       ? 0.2
@@ -616,16 +611,18 @@ async function callGeminiWithRetry(
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt += 1) {
     try {
-      const res = await fetch(`${endpoint}?key=${GEMINI_API_KEY}`, {
+      const res = await fetch(`${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GROQ_API_KEY}`
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature,
-            maxOutputTokens,
-            ...(options?.expectJson ? { responseMimeType: "application/json" } : {}),
-          },
+          model: settings.model_name || "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: prompt }],
+          temperature,
+          max_tokens: maxOutputTokens,
+          ...(options?.expectJson ? { response_format: { type: "json_object" } } : {}),
         }),
       })
 
@@ -640,7 +637,7 @@ async function callGeminiWithRetry(
           ? `: ${responseText.substring(0, 400)}`
           : ""
         const error = new Error(
-          `Gemini request failed (${res.status}${isRateLimited ? " - RATE LIMITED" : isServerError ? " - SERVER ERROR" : ""})${detail}`
+          `Groq request failed (${res.status}${isRateLimited ? " - RATE LIMITED" : isServerError ? " - SERVER ERROR" : ""})${detail}`
         )
 
         if (attempt < RETRY_ATTEMPTS) {
@@ -655,7 +652,7 @@ async function callGeminiWithRetry(
             delayMs,
             nextAttemptIn: `${(delayMs / 1000).toFixed(1)}s`,
           }
-          console.warn(`Gemini request failed; retrying`, context)
+          console.warn(`Groq request failed; retrying`, context)
           await new Promise((resolve) => setTimeout(resolve, delayMs))
           continue
         }
@@ -667,36 +664,29 @@ async function callGeminiWithRetry(
       
       // Check for API errors in response
       if (data.error) {
-        throw new Error(`Gemini API error: ${data.error.message || JSON.stringify(data.error)}`)
+        throw new Error(`Groq API error: ${data.error.message || JSON.stringify(data.error)}`)
       }
       
-      const finishReason = data.candidates?.[0]?.finishReason
+      const finishReason = data.choices?.[0]?.finish_reason
       lastFinishReason = finishReason
       
-      const parts = data.candidates?.[0]?.content?.parts
-      const text = Array.isArray(parts)
-        ? parts
-            .map((part: { text?: string }) => part?.text || "")
-            .join("\n")
-            .trim()
-        : ""
+      const text = data.choices?.[0]?.message?.content?.trim() || ""
 
       if (!text) {
         const reason = finishReason || "unknown"
         const errorDetails = {
           finishReason: reason,
-          safetyRatings: data.candidates?.[0]?.safetyRatings,
-          candidateCount: data.candidates?.length || 0,
+          candidateCount: data.choices?.length || 0,
         }
         throw new Error(
-          `Empty Gemini response (finish reason: ${reason}). Details: ${JSON.stringify(errorDetails)}`
+          `Empty Groq response (finish reason: ${reason}). Details: ${JSON.stringify(errorDetails)}`
         )
       }
 
       return {
         text,
-        promptTokens: Number(data.usageMetadata?.promptTokenCount || 0),
-        completionTokens: Number(data.usageMetadata?.candidatesTokenCount || 0),
+        promptTokens: Number(data.usage?.prompt_tokens || 0),
+        completionTokens: Number(data.usage?.completion_tokens || 0),
         finishReason,
       }
     } catch (error) {
@@ -716,35 +706,18 @@ async function callGeminiWithRetry(
   }
 
   throw new Error(
-    `Gemini request failed after ${RETRY_ATTEMPTS} transport retries (last status: ${lastStatusCode}, finishReason: ${lastFinishReason || "unknown"}). Final error: ${lastError?.message || "unknown"}`
+    `Groq request failed after ${RETRY_ATTEMPTS} transport retries (last status: ${lastStatusCode}, finishReason: ${lastFinishReason || "unknown"}). Final error: ${lastError?.message || "unknown"}`
   )
 }
 
-async function callGemini(
+async function callGroq(
   prompt: string,
   settings: ResearchSettings,
   options?: {
     expectJson?: boolean
   }
-): Promise<GeminiResult> {
-  try {
-    return await callGeminiWithRetry(prompt, settings, GEMINI_API, options)
-  } catch (primaryError) {
-    if (!GEMINI_FALLBACK_API) {
-      throw primaryError
-    }
-
-    console.warn("Primary Gemini endpoint failed, using fallback", {
-      reason: primaryError instanceof Error ? primaryError.message : "unknown",
-    })
-
-    return await callGeminiWithRetry(
-      prompt,
-      settings,
-      GEMINI_FALLBACK_API,
-      options
-    )
-  }
+): Promise<GroqResult> {
+  return await callGroqWithRetry(prompt, settings, GROQ_API, options)
 }
 
 function normalizeReport(report: ResearchReportBody): ResearchReportBody {
@@ -923,7 +896,7 @@ Input: "${query}"
 `
 
   onProgress?.("outline", "Generating outline")
-  const outlineResult = await callGeminiForJson<ResearchOutline>(
+  const outlineResult = await callGroqForJson<ResearchOutline>(
     outlinePrompt,
     settings,
     "outline"
@@ -975,7 +948,7 @@ Return JSON only:
 `
 
   onProgress?.("analysis", "Generating full report")
-  const reportResult = await callGeminiForJson<ResearchReportBody>(
+  const reportResult = await callGroqForJson<ResearchReportBody>(
     paperPrompt,
     settings,
     "report"
