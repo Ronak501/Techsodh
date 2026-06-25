@@ -234,7 +234,14 @@ export async function GET(
   const format = new URL(request.url).searchParams.get("format") || "markdown"
 
   if (format === "json") {
-    return NextResponse.json(data)
+    const safeName = getSafeFileName(data.query)
+    return new NextResponse(JSON.stringify(data, null, 2), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Disposition": `attachment; filename="${safeName}.json"`,
+      },
+    })
   }
 
   const markdown = toMarkdown(data)
