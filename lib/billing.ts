@@ -41,10 +41,10 @@ export function getBillingPlanAmountPaise(plan: BillingPlan) {
 }
 
 export function getPublicRazorpayKeyId() {
-  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID
 
   if (!keyId) {
-    throw new Error("NEXT_PUBLIC_RAZORPAY_KEY_ID is required for Razorpay checkout")
+    throw new Error("RAZORPAY_KEY_ID is required for Razorpay checkout")
   }
 
   return keyId
@@ -94,8 +94,8 @@ export function getRazorpayWebhookSecret() {
 
 export function getAppUrl(request?: Request) {
   const configuredUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.APP_URL ||
+    process.env.SITE_URL ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL ||
     process.env.VERCEL_URL
 

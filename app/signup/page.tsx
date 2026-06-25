@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,12 @@ export default function SignUpPage() {
   const handleSignUp = async () => {
     if (!fullName || !username || !email || !password) {
       setError("All fields are required");
+      toast.error("All fields are required");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      toast.error("Password must be at least 6 characters");
       return;
     }
     if (password.length < 6) {
@@ -33,6 +40,7 @@ export default function SignUpPage() {
     setLoading(true);
     setError(null);
 
+    const appUrl = window.location.origin;
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -41,21 +49,26 @@ export default function SignUpPage() {
           full_name: fullName,
           username: username,
         },
+        emailRedirectTo: `${appUrl}/auth/callback`,
       },
     });
 
     if (authError || !data.user) {
-      setError(authError?.message || "Signup failed. Please try again.");
+      const msg = authError?.message || "Signup failed. Please try again.";
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
       return;
     }
 
     // If email confirmation is disabled, redirect directly to dashboard
     if (data.session) {
+      toast.success("Account created! Redirecting...");
       router.push("/dashboard");
       router.refresh();
     } else {
       // Show success message - email confirmation required
+      toast.success("Account created! Check your email to confirm.");
       setSuccess(true);
     }
     setLoading(false);

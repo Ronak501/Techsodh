@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,13 @@ export default function LoginPage() {
   const supabase = createClient();
   const router = useRouter();
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "auth_callback_failed") {
+      toast.error("Email confirmation failed. Please try signing up again.");
+    }
+  }, []);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,6 +28,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     if (!email || !password) {
       setError("Email and password are required");
+      toast.error("Email and password are required");
       return;
     }
 
@@ -30,8 +39,10 @@ export default function LoginPage() {
 
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       setLoading(false);
     } else {
+      toast.success("Signed in successfully!");
       router.push("/dashboard");
       router.refresh();
     }

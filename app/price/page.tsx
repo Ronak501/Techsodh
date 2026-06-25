@@ -115,7 +115,7 @@ const plans = [
   },
 ];
 
-export default function PricingPage() { 
+export default function PricingPage() {
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<BillingPlan | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -281,11 +281,10 @@ export default function PricingPage() {
         {plans.map((plan, index) => (
           <Card
             key={index}
-            className={`relative p-8 transition-all duration-300 ${
-              plan.highlight
+            className={`relative p-8 transition-all duration-300 ${plan.highlight
                 ? "scale-105 border-2 border-black shadow-2xl"
                 : "border border-border/50"
-            }`}
+              }`}
           >
             <h2 className="mb-2 text-2xl font-semibold">{plan.name}</h2>
             <p className="mb-4 text-3xl font-bold">{plan.price}</p>

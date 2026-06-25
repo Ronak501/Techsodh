@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -183,6 +184,29 @@ export default function ResearchDetailPage() {
     };
   }, [data]);
 
+  const handleExport = async (format: "markdown" | "json" | "pdf") => {
+    if (!data) return;
+    try {
+      const response = await fetch(`/api/research/${data.id}/export?format=${format}`);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: "Export failed" }));
+        toast.error(err.error || "Export failed");
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = format === "markdown" ? "research-report.md" : format === "json" ? "research-report.json" : "research-report.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download export. Please try again.");
+    }
+  };
+
   const submitFeedback = async (rating: "helpful" | "needs_work" | "wrong") => {
     if (!params.id) return;
 
@@ -297,23 +321,17 @@ export default function ResearchDetailPage() {
 
             {data ? (
               <div className="flex flex-wrap gap-2 lg:justify-end">
-                <Button asChild variant="outline" size="sm">
-                  <a href={`/api/research/${data.id}/export?format=markdown`}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Markdown
-                  </a>
+                <Button variant="outline" size="sm" onClick={() => handleExport("markdown")}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Markdown
                 </Button>
-                <Button asChild variant="outline" size="sm">
-                  <a href={`/api/research/${data.id}/export?format=json`}>
-                    <Download className="mr-2 h-4 w-4" />
-                    JSON
-                  </a>
+                <Button variant="outline" size="sm" onClick={() => handleExport("json")}>
+                  <Download className="mr-2 h-4 w-4" />
+                  JSON
                 </Button>
-                <Button asChild variant="outline" size="sm">
-                  <a href={`/api/research/${data.id}/export?format=pdf`}>
-                    <Download className="mr-2 h-4 w-4" />
-                    PDF
-                  </a>
+                <Button variant="outline" size="sm" onClick={() => handleExport("pdf")}>
+                  <Download className="mr-2 h-4 w-4" />
+                  PDF
                 </Button>
                 <Button
                   variant="outline"
