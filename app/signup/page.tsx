@@ -47,6 +47,10 @@ export default function SignUpPage() {
       toast.error("Password must be at least 6 characters");
       return;
     }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
     setLoading(true);
     setError(null);
