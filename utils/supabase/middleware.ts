@@ -44,16 +44,34 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (error) {
-      console.error("Supabase Auth Error:", error.message);
+      // Stale/invalid refresh token — clear all sb- cookies and send to signin
+      if (
+        error.message.includes("Refresh Token") ||
+        (error as { code?: string }).code === "refresh_token_not_found"
+      ) {
+        const signinUrl = request.nextUrl.clone();
+        signinUrl.pathname = "/signin";
+        const clearResponse = NextResponse.redirect(signinUrl);
+        request.cookies.getAll().forEach(({ name }) => {
+          if (name.startsWith("sb-")) clearResponse.cookies.delete(name);
+        });
+        return clearResponse;
+      }
+
+      // "Auth session missing!" is expected for every unauthenticated visitor — not an error
+      if (!error.message.includes("Auth session missing")) {
+        console.error("Supabase Auth Error:", error.message);
+      }
     }
 
-    const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || 
-                             request.nextUrl.pathname.startsWith('/research') || 
-                             request.nextUrl.pathname.startsWith('/chat');
+    const isProtectedRoute =
+      request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname.startsWith("/research") ||
+      request.nextUrl.pathname.startsWith("/chat");
 
     if (!user && isProtectedRoute) {
       const url = request.nextUrl.clone();
-      url.pathname = '/signin';
+      url.pathname = "/signin";
       return NextResponse.redirect(url);
     }
   } catch (err) {
