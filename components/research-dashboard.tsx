@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
@@ -29,11 +30,13 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Trash2,
   UploadCloud,
   TrendingUp,
   TriangleAlert,
   WandSparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { Badge } from "@/components/ui/badge";
@@ -329,11 +332,19 @@ function CommandPalette({
   );
 }
 
+const PAGE_SIZE = 6;
+
 export default function ResearchDashboard({ user }: ResearchDashboardProps) {
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
   const [supabase] = useState(() => createClient());
   const [jobs, setJobs] = useState<ResearchJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [displayName, setDisplayName] = useState("Researcher");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -346,6 +357,7 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const splitRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const inProgressRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -362,16 +374,18 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
         );
       }
 
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("research_reports")
         .select(
           "id, query, status, source_count, prompt_tokens, completion_tokens, estimated_cost_usd, created_at",
+          { count: "exact" },
         )
         .order("created_at", { ascending: false })
-        .limit(6);
+        .range(0, PAGE_SIZE - 1);
 
       if (!cancelled && !error && data) {
         setJobs(data as ResearchJob[]);
+        setHasMore(count != null && data.length < count);
       }
 
       if (!cancelled) {
@@ -385,6 +399,23 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
       cancelled = true;
     };
   }, [supabase, user]);
+
+  // Auto-poll when there are in-progress reports
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (inProgressRef.current === 0) return;
+      const { data } = await supabase
+        .from("research_reports")
+        .select(
+          "id, query, status, source_count, prompt_tokens, completion_tokens, estimated_cost_usd, created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(jobs.length || PAGE_SIZE);
+      if (data) setJobs(data as ResearchJob[]);
+    }, 5000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -470,6 +501,7 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
   const generatedReports = jobs.filter((job) => job.status === "completed").length;
   const timeSaved = Math.max(0, Math.round(totalProjects * 14 + sourcesProcessed * 0.5));
   const inProgressCount = jobs.filter((job) => job.status === "in_progress").length;
+  inProgressRef.current = inProgressCount;
   const reviewCount = jobs.filter((job) => job.status === "failed").length;
 
   const canScroll = (sectionId: string) => {
@@ -479,6 +511,76 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
 
   const paletteAction = (target: string) => {
     canScroll(target);
+  };
+
+  const deleteJob = (id: string) => {
+    setDeleteConfirmId(id);
+    setDeleteConfirmText("");
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    const id = deleteConfirmId;
+    setDeleteConfirmId(null);
+    setDeleteConfirmText("");
+
+    setJobs((prev) => prev.filter((j) => j.id !== id));
+    if (activeNotebookId === id) setActiveNotebookId(null);
+    setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+
+    try {
+      const response = await fetch(`/api/research/${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: "Delete failed" }));
+        toast.error(err.error || "Failed to delete report");
+      } else {
+        toast.success("Research report deleted");
+      }
+    } catch {
+      toast.error("Failed to delete. Please try again.");
+    }
+  };
+
+  const bulkDeleteJobs = () => {
+    if (selectedIds.size === 0) return;
+    setDeleteConfirmId("__bulk__");
+    setDeleteConfirmText("");
+  };
+
+  const confirmBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    setDeleteConfirmId(null);
+    setDeleteConfirmText("");
+    setJobs((prev) => prev.filter((j) => !ids.includes(j.id)));
+    setSelectedIds(new Set());
+    if (activeNotebookId && ids.includes(activeNotebookId)) setActiveNotebookId(null);
+
+    const results = await Promise.allSettled(
+      ids.map((id) => fetch(`/api/research/${id}`, { method: "DELETE" })),
+    );
+    const failed = results.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value.ok)).length;
+    if (failed > 0) {
+      toast.error(`Failed to delete ${failed} report${failed > 1 ? "s" : ""}`);
+    } else {
+      toast.success(`${ids.length} report${ids.length > 1 ? "s" : ""} deleted`);
+    }
+  };
+
+  const loadMoreJobs = async () => {
+    setLoadingMore(true);
+    const { data, count } = await supabase
+      .from("research_reports")
+      .select(
+        "id, query, status, source_count, prompt_tokens, completion_tokens, estimated_cost_usd, created_at",
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .range(jobs.length, jobs.length + PAGE_SIZE - 1);
+    if (data) {
+      setJobs((prev) => [...prev, ...data as ResearchJob[]]);
+      setHasMore(count != null && jobs.length + data.length < count);
+    }
+    setLoadingMore(false);
   };
 
   const handleUpload = (files: FileList | null) => {
@@ -514,6 +616,71 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
   return (
     <div className="dashboard-surface min-h-screen bg-background text-foreground">
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onAction={paletteAction} />
+
+      {deleteConfirmId && (() => {
+        const isBulk = deleteConfirmId === "__bulk__";
+        const job = isBulk ? null : jobs.find((j) => j.id === deleteConfirmId);
+        const onConfirm = isBulk ? confirmBulkDelete : confirmDelete;
+        const onClose = () => { setDeleteConfirmId(null); setDeleteConfirmText(""); };
+
+        return (
+          <div
+            className="fixed inset-0 z-80 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm"
+            onClick={onClose}
+          >
+            <div
+              className="w-full max-w-md rounded-3xl border border-border/70 bg-background p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <h2 className="mt-4 text-xl font-semibold tracking-tight">
+                {isBulk ? `Delete ${selectedIds.size} research report${selectedIds.size > 1 ? "s" : ""}?` : "Delete research report?"}
+              </h2>
+              {job && (
+                <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                  &ldquo;{job.query}&rdquo;
+                </p>
+              )}
+              <p className="mt-4 text-sm text-muted-foreground">
+                This action is permanent and cannot be undone. Type{" "}
+                <span className="font-semibold text-foreground">delete</span> to confirm.
+              </p>
+              <Input
+                className="mt-3 rounded-xl"
+                placeholder="Type delete to confirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && deleteConfirmText === "delete") onConfirm();
+                  if (e.key === "Escape") onClose();
+                }}
+                autoFocus
+              />
+              <div className="mt-4 flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  onClick={onClose}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="flex-1 rounded-xl"
+                  disabled={deleteConfirmText !== "delete"}
+                  onClick={onConfirm}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="border-b border-border/70 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 max-w-400 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:hidden">
@@ -775,7 +942,12 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
                           Shortcuts
                         </Button>
                       </div>
-                      <Button type="button" size="sm" className="gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => router.push(`/research/new${mainQuery.trim() ? `?q=${encodeURIComponent(mainQuery.trim())}` : ""}`)}
+                      >
                         <Sparkles className="h-4 w-4" />
                         Generate brief
                       </Button>
@@ -850,18 +1022,53 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
                 </div>
               </Card>
             ) : (
-              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-                {jobs.slice(0, 6).map((job) => (
-                  <Card
-                    key={job.id}
-                    className={cn(
-                      "rounded-[20px] border-border/70 bg-card/90 p-0 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.45)] transition hover:-translate-y-1",
-                      activeNotebookId === job.id && "border-primary/30 bg-primary/5",
-                    )}
-                  >
-                    <button type="button" className="block w-full text-left" onClick={() => setActiveNotebookId(job.id)}>
-                      <div className="flex items-start justify-between gap-4 p-5">
-                        <div className="min-w-0">
+              <div className="space-y-4">
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3">
+                    <span className="text-sm font-medium">{selectedIds.size} report{selectedIds.size > 1 ? "s" : ""} selected</span>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="gap-2"
+                        onClick={bulkDeleteJobs}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete selected
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                  {jobs.map((job) => (
+                    <Card
+                      key={job.id}
+                      className={cn(
+                        "rounded-[20px] border-border/70 bg-card/90 p-0 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.45)] transition hover:-translate-y-1",
+                        activeNotebookId === job.id && "border-primary/30 bg-primary/5",
+                        selectedIds.has(job.id) && "border-destructive/40 bg-destructive/5",
+                      )}
+                    >
+                      <div className="flex items-start gap-4 p-5">
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 shrink-0 accent-primary cursor-pointer"
+                          checked={selectedIds.has(job.id)}
+                          onChange={(e) => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(job.id);
+                              else next.delete(job.id);
+                              return next;
+                            });
+                          }}
+                          aria-label={`Select ${job.query}`}
+                        />
+                        <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setActiveNotebookId(job.id)}>
                           <div className="flex items-center gap-2">
                             <StatusPill status={job.status} />
                             <span className="text-xs text-muted-foreground">{formatTime(job.created_at)}</span>
@@ -870,12 +1077,41 @@ export default function ResearchDashboard({ user }: ResearchDashboardProps) {
                           <p className="mt-2 text-sm leading-6 text-muted-foreground">
                             {job.source_count} sources · ${Number(job.estimated_cost_usd || 0).toFixed(2)} estimated spend
                           </p>
+                        </button>
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          <Link href={`/research/${job.id}`}>
+                            <ChevronRight className="mt-1 h-4 w-4 text-muted-foreground" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => deleteJob(job.id)}
+                            className="rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                            aria-label="Delete research report"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
-                        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
                       </div>
-                    </button>
-                  </Card>
-                ))}
+                    </Card>
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={loadMoreJobs}
+                      disabled={loadingMore}
+                      className="gap-2"
+                    >
+                      {loadingMore ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                      ) : null}
+                      Load more
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </section>

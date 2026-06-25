@@ -51,6 +51,7 @@ type StreamProgress = {
 interface Props {
   setSummaryData: (data: ResearchSummaryData) => void;
   onReportGenerated?: (reportId: string) => void;
+  initialQuery?: string;
 }
 
 const defaultPreferences: ResearchPreferences = {
@@ -63,8 +64,13 @@ const defaultPreferences: ResearchPreferences = {
 export function ResearchInterface({
   setSummaryData,
   onReportGenerated,
+  initialQuery,
 }: Props) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery ?? "");
+
+  useEffect(() => {
+    if (initialQuery) setQuery(initialQuery);
+  }, [initialQuery]);
   const [mode, setMode] = useState<"topic" | "claim">("topic");
   const [template, setTemplate] =
     useState<ResearchTemplate>("literature_review");

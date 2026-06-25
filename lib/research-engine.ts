@@ -11,6 +11,9 @@ import type {
 } from "@/lib/research-types"
 import { humanizeText, type HumanizeTone } from "@/lib/humanizer"
 
+const GROQ_API_KEY = process.env.GROQ_API_KEY!
+const GROQ_API = process.env.GROQ_API!
+
 export type ResearchMode = "topic" | "claim"
 
 export type ResearchPipelineInput = {
@@ -592,11 +595,15 @@ function computeRetryDelayMs(attempt: number, retryAfterMs?: number | null, stat
 async function callGroqWithRetry(
   prompt: string,
   settings: ResearchSettings,
-  endpoint: string,
+  endpoint: string | undefined,
   options?: {
     expectJson?: boolean
   }
 ): Promise<GroqResult> {
+  if (!endpoint || !GROQ_API_KEY) {
+    throw new Error("GROQ_API or GROQ_API_KEY environment variable is not set. Add them to your Vercel environment variables.")
+  }
+
   const temperature =
     settings.output_style === "concise"
       ? 0.2

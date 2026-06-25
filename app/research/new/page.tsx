@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, FilePenLine, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResearchInterface } from "@/components/research-interface";
@@ -16,6 +16,8 @@ const launchSignals = [
 
 export default function NewResearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") ?? undefined;
 
   return (
     <div className="research-surface min-h-screen bg-background">
@@ -87,6 +89,7 @@ export default function NewResearchPage() {
             onReportGenerated={(reportId) => {
               router.push(`/research/${reportId}`);
             }}
+            initialQuery={initialQuery}
           />
         </div>
       </main>
