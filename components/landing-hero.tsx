@@ -35,7 +35,7 @@ export function LandingHero() {
         <Button
           asChild
           size="lg"
-          className="rounded-full bg-black px-8 py-7 text-lg text-white hover:bg-black/90"
+          className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-10 py-7 text-lg font-semibold text-white shadow-xl shadow-violet-500/40 transition-all duration-200 hover:from-violet-500 hover:to-fuchsia-400 hover:shadow-violet-500/50 hover:scale-[1.04]"
         >
           <Link href="/research">
             Try Techsodh
