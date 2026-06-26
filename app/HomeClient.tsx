@@ -287,20 +287,24 @@ export default function HomeClient({ user }: Props) {
               rhythm that makes long research output easy to scan.
             </p>
 
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="shadow-lg shadow-primary/30">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-8 text-base font-semibold text-white shadow-xl shadow-violet-500/40 transition-all duration-200 hover:from-violet-500 hover:to-fuchsia-400 hover:shadow-violet-500/50 hover:scale-[1.03]"
+              >
                 <Link href="/research" className="gap-2">
                   Start Research
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button asChild size="sm" variant="outline" className="rounded-full">
                 <Link href="/humanizer">Open Humanizer</Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button asChild size="sm" variant="outline" className="rounded-full">
                 <Link href="/chat">Ask in Chat</Link>
               </Button>
-              <Button asChild size="lg" variant="ghost">
+              <Button asChild size="sm" variant="ghost" className="rounded-full">
                 <Link href="/">Dashboard</Link>
               </Button>
             </div>
@@ -454,21 +458,21 @@ export default function HomeClient({ user }: Props) {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3 lg:justify-end">
+              <div className="flex flex-wrap items-center gap-3 lg:justify-end">
                 <Button
                   asChild
                   size="lg"
-                  className="shadow-lg shadow-primary/25"
+                  className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-8 font-semibold text-white shadow-xl shadow-violet-500/40 transition-all duration-200 hover:from-violet-500 hover:to-fuchsia-400 hover:scale-[1.03]"
                 >
                   <Link href="/research">Launch Research</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline">
+                <Button asChild size="sm" variant="outline" className="rounded-full">
                   <Link href="/chat" className="gap-2">
                     Open Chat
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="ghost">
+                <Button asChild size="sm" variant="ghost" className="rounded-full">
                   <Link href="/price">View Pricing</Link>
                 </Button>
               </div>
