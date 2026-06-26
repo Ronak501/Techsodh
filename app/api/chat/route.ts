@@ -20,6 +20,20 @@ const chatRequestSchema = z.object({
 })
 
 export async function POST(request: Request) {
+    const supabase = await createClient()
+
+    if (!process.env.GROQ_API_KEY) {
+        return NextResponse.json({ error: "AI not configured" }, { status: 500 })
+    }
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        return safeJsonResponse(401, "Unauthorized")
+    }
+
     const body = await parseJsonSafely<unknown>(request)
     if (!body) {
         return safeJsonResponse(400, "Invalid JSON body")
@@ -31,22 +45,6 @@ export async function POST(request: Request) {
     }
 
     const { message, conversationId } = parsed.data
-
-    const supabase = await createClient()
-
-    if (!process.env.GROQ_API_KEY) {
-        return NextResponse.json({ error: "AI not configured" }, { status: 500 })
-    }
-
-    // Verify conversation ownership
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-    // console.log("User:", user)
-
-    if (!user) {
-        return safeJsonResponse(401, "Unauthorized")
-    }
 
     const limiter = await enforceRateLimit({
         supabase,

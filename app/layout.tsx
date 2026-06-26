@@ -20,9 +20,8 @@ export const metadata: Metadata = {
   title: "TechSodh - AI-Powered Research Automation",
   description:
     "Automated research with AI-powered literature retrieval, data analysis, and synthesis",
-  generator: "Ronak Talaviya",
   icons: {
-    icon: "/avatars/techsodh.png", 
+    icon: "/avatars/techsodh.png",
   },
 };
 
@@ -38,8 +37,8 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
-        <Toaster richColors position="top-right" />
         <Analytics />
         <SpeedInsights />
       </body>

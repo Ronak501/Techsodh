@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/navbar";
+import { type ResearchHistoryItem } from "@/lib/research-history";
 import {
   BookOpen,
   Download,
@@ -20,38 +22,6 @@ import {
   LayoutDashboard,
   ArrowRight
 } from "lucide-react";
-
-type ResearchHistoryItem = {
-  id: string;
-  query: string;
-  status: "completed" | "in_progress" | "failed";
-  source_count: number;
-  created_at: string;
-};
-
-const demoHistory: ResearchHistoryItem[] = [
-  {
-    id: "demo-1",
-    query: "Notebook-style research workflow for AI software",
-    status: "completed",
-    source_count: 12,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "demo-2",
-    query: "Compare Perplexity, NotebookLM, and Linear research UX",
-    status: "in_progress",
-    source_count: 8,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-  },
-  {
-    id: "demo-3",
-    query: "Summarize product strategy with citations",
-    status: "failed",
-    source_count: 5,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-];
 
 function StatusIcon({ status }: { status: ResearchHistoryItem["status"] }) {
   if (status === "completed") return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
@@ -78,12 +48,7 @@ export default function DashboardPage() {
 
       if (!mounted) return;
 
-      if (data && data.length > 0) {
-        setHistory(data as ResearchHistoryItem[]);
-      } else {
-        // Fallback to demo data if no DB rows yet
-        setHistory(demoHistory);
-      }
+      setHistory((data ?? []) as ResearchHistoryItem[]);
       setIsLoading(false);
     };
 
@@ -103,12 +68,15 @@ export default function DashboardPage() {
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Optimistic UI update
-    setHistory((prev) => prev.filter(item => item.id !== id));
-    
-    // In a real app, delete from Supabase here
-    await supabase.from("research_reports").delete().eq("id", id);
+
+    const previous = history;
+    setHistory((prev) => prev.filter((item) => item.id !== id));
+
+    const res = await fetch(`/api/research/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setHistory(previous);
+      toast.error("Failed to delete. Please try again.");
+    }
   };
 
   return (
@@ -179,7 +147,7 @@ export default function DashboardPage() {
             {filteredHistory.map((item) => (
                 <div 
                   key={item.id}
-                  onClick={() => router.push("/research")}
+                  onClick={() => router.push(`/research/${item.id}`)}
                   className="cursor-pointer group flex flex-col justify-between rounded-3xl border border-border bg-card p-6 h-full shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
                 >
                   

@@ -541,9 +541,10 @@ export default function ResearchDetailPage() {
                 <div className="md:w-1/3 flex flex-col gap-2">
                   <Textarea
                     value={feedbackNote}
-                    onChange={(event) => setFeedbackNote(event.target.value)}
+                    onChange={(event) => setFeedbackNote(event.target.value.slice(0, 500))}
                     placeholder="Optional: short note (missing sources, unclear claim)"
                     className="min-h-18 text-sm"
+                    maxLength={500}
                   />
                   <div className="flex items-center gap-2">
                     <Button

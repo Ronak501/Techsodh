@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
 import { safeJsonResponse } from "@/lib/api-security"
-import type { TemplateCategory, ResearchSettings } from "@/lib/research-types"
 
 const templateSchema = z.object({
   name: z.string().min(1).max(200),

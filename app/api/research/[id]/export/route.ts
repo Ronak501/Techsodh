@@ -140,6 +140,16 @@ function getSafeFileName(value: string) {
     .slice(0, 60) || "research-report"
 }
 
+/** Replace characters outside Latin-1 (pdf-lib Helvetica only supports WinAnsi). */
+function sanitizeForPdf(text: string): string {
+  return text
+    .replace(/[\u2018\u2019]/g, "'")   // curly single quotes
+    .replace(/[\u201C\u201D]/g, '"')   // curly double quotes
+    .replace(/[\u2013\u2014]/g, "-")   // en/em dashes
+    .replace(/\u2026/g, "...")          // ellipsis
+    .replace(/[^\x00-\xFF]/g, "?")     // everything else outside Latin-1
+}
+
 async function toPdfBytes(title: string, markdownContent: string) {
   const pdf = await PDFDocument.create()
   let page = pdf.addPage([595, 842])
@@ -148,7 +158,7 @@ async function toPdfBytes(title: string, markdownContent: string) {
 
   let y = 810
 
-  page.drawText(title, {
+  page.drawText(sanitizeForPdf(title), {
     x: 40,
     y,
     size: 16,
@@ -158,7 +168,7 @@ async function toPdfBytes(title: string, markdownContent: string) {
 
   y -= 26
 
-  const lines = markdownContent
+  const lines = sanitizeForPdf(markdownContent)
     .replace(/\r/g, "")
     .split("\n")
     .flatMap((line) => {
@@ -248,15 +258,19 @@ export async function GET(
   const safeName = getSafeFileName(data.query)
 
   if (format === "pdf") {
-    const pdfBytes = await toPdfBytes(data.query, markdown)
-
-    return new NextResponse(Buffer.from(pdfBytes), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
-      },
-    })
+    try {
+      const pdfBytes = await toPdfBytes(data.query, markdown)
+      return new NextResponse(Buffer.from(pdfBytes), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
+        },
+      })
+    } catch (pdfError) {
+      console.error("PDF generation failed", pdfError)
+      return safeJsonResponse(500, "Failed to generate PDF. Try exporting as Markdown instead.")
+    }
   }
 
   const fileName = `${safeName}.md`
