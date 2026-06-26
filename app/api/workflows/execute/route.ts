@@ -2,8 +2,8 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
 import { safeJsonResponse } from "@/lib/api-security"
-import { runResearchPipeline, type ResearchPipelineInput } from "@/lib/research-engine"
-import { enforceSubscriptionAndTokenAccess, consumeMonthlyTokens, estimateTokensFromText } from "@/lib/subscription-access"
+import { runResearchPipeline } from "@/lib/research-engine"
+import { enforceSubscriptionAndTokenAccess, consumeMonthlyTokens } from "@/lib/subscription-access"
 
 const workflowExecuteSchema = z.object({
   workflow_id: z.string().uuid(),
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     }
 
     // Check subscription access
-    const { ok, plan } = await enforceSubscriptionAndTokenAccess(
+    const { ok } = await enforceSubscriptionAndTokenAccess(
       supabase,
       user.id,
       "research"

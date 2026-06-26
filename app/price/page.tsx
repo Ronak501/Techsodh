@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -278,9 +277,9 @@ export default function PricingPage() {
       ) : null}
 
       <div className="mx-auto mb-20 grid max-w-5xl gap-8 md:grid-cols-2">
-        {plans.map((plan, index) => (
+        {plans.map((plan) => (
           <Card
-            key={index}
+            key={plan.name}
             className={`relative p-8 transition-all duration-300 ${plan.highlight
                 ? "scale-105 border-2 border-black shadow-2xl"
                 : "border border-border/50"

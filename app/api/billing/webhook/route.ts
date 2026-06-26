@@ -146,11 +146,8 @@ export async function POST(request: Request) {
         break
     }
   } catch (error) {
+    // Always return 200 after signature verification — non-2xx causes Razorpay to retry.
     console.error("Razorpay webhook handling failed", error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Webhook processing failed" },
-      { status: 500 },
-    )
   }
 
   return NextResponse.json({ received: true })

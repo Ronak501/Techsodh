@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRealtimeComments } from "@/lib/hooks/useRealtime";
 import { MessageCircle, Reply, Check, X } from "lucide-react";
@@ -25,9 +25,14 @@ export function ResearchComments({ researchId }: CommentsProps) {
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
-    await addComment(section, newComment, replyingTo || undefined);
-    setNewComment("");
-    setReplyingTo(null);
+    try {
+      await addComment(section, newComment, replyingTo || undefined);
+      setNewComment("");
+      setReplyingTo(null);
+      toast.success(replyingTo ? "Reply added." : "Comment added.");
+    } catch {
+      toast.error("Failed to post comment. Please try again.");
+    }
   };
 
   const toggleExpanded = (commentId: string) => {
@@ -137,7 +142,14 @@ export function ResearchComments({ researchId }: CommentsProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => deleteComment(comment.id)}
+                  onClick={async () => {
+                    try {
+                      await deleteComment(comment.id);
+                      toast.success("Comment deleted.");
+                    } catch {
+                      toast.error("Failed to delete comment.");
+                    }
+                  }}
                 >
                   <X className="w-4 h-4" />
                 </Button>

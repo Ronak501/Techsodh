@@ -1,16 +1,6 @@
 import { NextResponse } from "next/server"
-import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
 import { safeJsonResponse } from "@/lib/api-security"
-
-const searchSchema = z.object({
-  query: z.string().min(2).max(500),
-  tags: z.array(z.string()).optional(),
-  author_id: z.string().uuid().optional(),
-  limit: z.number().int().min(1).max(100).default(20),
-  offset: z.number().int().min(0).default(0),
-  sort: z.enum(["relevance", "newest", "most_viewed", "most_cited"]).default("relevance"),
-})
 
 export async function GET(request: Request) {
   const supabase = await createClient()

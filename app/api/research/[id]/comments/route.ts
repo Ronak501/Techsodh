@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/utils/supabase/server"
 import { safeJsonResponse, enforceRateLimit, getRequestIp } from "@/lib/api-security"
-import { enforceSubscriptionAndTokenAccess } from "@/lib/subscription-access"
 
 const commentSchema = z.object({
   section: z.string().min(1).max(100),
@@ -75,7 +74,12 @@ export async function POST(
       .eq("user_id", user.id)
       .single()
 
-    if (!isOwner.data && !share?.data && share?.data?.permission_level !== "comment" && share?.data?.permission_level !== "edit") {
+    const canComment =
+      !!isOwner.data ||
+      share?.permission_level === "comment" ||
+      share?.permission_level === "edit"
+
+    if (!canComment) {
       return safeJsonResponse(403, "Access denied")
     }
 
